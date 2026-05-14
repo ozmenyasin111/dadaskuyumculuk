@@ -26,6 +26,10 @@ class MarginSetting(Base):
     sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     is_readonly: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
+    # True → alis_offset/satis_offset milyem (çarpan) olarak yorumlanır.
+    # Has Altın display × milyem ile fiyat hesaplanır. False → TL bazlı ekleme/çıkarma.
+    is_multiplier: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
     )

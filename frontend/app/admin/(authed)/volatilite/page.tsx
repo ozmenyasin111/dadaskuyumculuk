@@ -62,12 +62,14 @@ export default function VolatilitePage() {
               Bu ekran ne işe yarar?
             </div>
             <p className="mb-2">
-              Piyasa aniden hareketlenirse (dolar dakikada %1 sıçrarsa vb.)
-              Harem Altın&apos;ın alış-satış makası geniş açılır. Bu durumda
-              <b> Kâr Marjları</b> ekranında girdiğiniz değerler{" "}
-              <b>geçici olarak geçersiz olur</b> ve{" "}
-              <b>bu sayfada girdiğiniz değerler aktif olur</b>. Bu sistem
-              işletmenizi anlık fiyat değişimlerinde zarar etmekten korur.
+              Piyasa aniden hareketlenirse Harem Altın&apos;ın alış-satış makası
+              geniş açılır. Bu durumda <b>Kâr Marjları</b> ekranında Has Altın
+              için girdiğiniz değerler <b>geçici olarak geçersiz olur</b> ve{" "}
+              <b>bu sayfada girdiğiniz değerler aktif olur</b>. Diğer altın
+              ürünleri Has Altın fiyatımız × milyem ile hesaplandığı için
+              <b> bütün altın fiyatlarınız otomatik olarak</b> bu güvenli
+              değerlerle güncellenir; ayrıca tek tek düzeltmeniz gerekmez. Bu
+              sistem işletmenizi anlık fiyat değişimlerinde zarar etmekten korur.
             </p>
             <p className="mb-1 font-semibold">Her alanın anlamı:</p>
             <ul className="list-disc pl-5 space-y-1 text-xs">

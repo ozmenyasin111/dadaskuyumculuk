@@ -37,6 +37,7 @@ export type Margin = {
   satis_offset: string;
   sort_order: number;
   is_readonly: boolean;
+  is_multiplier: boolean;
 };
 
 export type Volatility = {

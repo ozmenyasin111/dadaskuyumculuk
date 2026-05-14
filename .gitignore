@@ -36,3 +36,9 @@ yarn-debug.log*
 *.db
 *.sqlite3
 data/
+
+# Ekran görüntüleri ve büyük medya (sadece geliştirme sırasında paylaşılan)
+docs/Ekran Resmi*.png
+docs/*.mov
+docs/IMG-*.jpg
+docs/Gemini_Generated_Image_*.png

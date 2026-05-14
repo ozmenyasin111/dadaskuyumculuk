@@ -11,8 +11,8 @@ export function FooterSection() {
             <Image
               src="/logo-figure.png"
               alt=""
-              width={1024}
-              height={1047}
+              width={1037}
+              height={1024}
               className="h-16 w-auto"
               style={{ filter: "invert(0.92) brightness(1.05)" }}
             />
@@ -29,7 +29,7 @@ export function FooterSection() {
             </div>
           </div>
           <p className="text-xs text-gray-400 leading-relaxed mt-2">
-            1972&apos;den bu yana güvenilir kuyumculuk hizmeti.
+            1974&apos;ten bu yana güvenilir kuyumculuk hizmeti.
           </p>
         </div>
 

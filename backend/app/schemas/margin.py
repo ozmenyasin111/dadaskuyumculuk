@@ -14,6 +14,7 @@ class MarginOut(BaseModel):
     satis_offset: Decimal
     sort_order: int
     is_readonly: bool
+    is_multiplier: bool
 
 
 class MarginUpdateIn(BaseModel):

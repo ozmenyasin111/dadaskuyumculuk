@@ -6,32 +6,37 @@ const MAP_URL = "https://share.google/aYsPNr2zozwmhwt2O";
 export function HakkimizdaSection() {
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-8 sm:p-12">
-      <div className="flex flex-col items-center text-center mb-8">
-        <Image
-          src="/logo-figure.png"
-          alt="Dadaş Kuyumculuk"
-          width={1024}
-          height={1047}
-          className="h-32 sm:h-40 w-auto mb-4"
-        />
-        <h2 className="font-brand font-bold text-black text-3xl sm:text-5xl tracking-[0.04em]">
-          DADAŞ
-        </h2>
-        <div className="font-brand font-bold text-gold-700 text-sm sm:text-base tracking-[0.32em] mt-2">
-          KUYUMCULUK
+      <div className="flex flex-col md:flex-row md:items-center gap-8 md:gap-12 mb-8">
+        <div className="flex-shrink-0 flex justify-center md:justify-start">
+          <Image
+            src="/logo-figure.png"
+            alt="Dadaş Kuyumculuk"
+            width={1037}
+            height={1024}
+            className="h-48 sm:h-60 md:h-72 w-auto"
+          />
         </div>
-        <div className="font-brand font-bold text-gold-600 text-xs sm:text-sm tracking-[0.32em] mt-1">
-          1974
+        <div className="flex-1 md:text-left text-center">
+          <h2 className="font-brand font-bold text-black text-4xl sm:text-6xl tracking-[0.04em]">
+            DADAŞ
+          </h2>
+          <div className="font-brand font-bold text-gold-700 text-base sm:text-lg tracking-[0.32em] mt-2">
+            KUYUMCULUK
+          </div>
+          <div className="font-brand font-bold text-gold-600 text-sm sm:text-base tracking-[0.32em] mt-1">
+            1974
+          </div>
+          <p className="text-base text-gray-700 leading-relaxed mt-6">
+            1974 yılından bu yana altın ve kıymetli maden sektörlerinde faaliyet
+            gösteren Dadaş Kuyumculuk, sektördeki 52 yılı aşkın tecrübesiyle
+            güvenilir ve köklü bir markadır. Müşteri memnuniyetini esas alan
+            hizmet anlayışıyla faaliyet gösteren Dadaş Kuyumculuk, altın
+            piyasalarında şeffaf, etik ve sürdürülebilir bir yapıyla hizmet
+            sunmaktadır ve etik değerlerden ödün vermeden kaliteli hizmeti
+            teknolojiyle birleştirir.
+          </p>
         </div>
       </div>
-      <p className="text-base text-gray-700 leading-relaxed mb-8 max-w-3xl mx-auto">
-        1972 yılından bu yana altın ve kıymetli maden sektörlerinde faaliyet
-        gösteren Dadaş Kuyumculuk, sektördeki 54 yılı aşkın tecrübesiyle güvenilir
-        ve köklü bir markadır. Müşteri memnuniyetini esas alan hizmet anlayışıyla
-        faaliyet gösteren Dadaş Kuyumculuk, altın piyasalarında şeffaf, etik ve
-        sürdürülebilir bir yapıyla hizmet sunmaktadır ve etik değerlerden ödün
-        vermeden kaliteli hizmeti teknolojiyle birleştirir.
-      </p>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
         <a
           href="tel:02125534525"

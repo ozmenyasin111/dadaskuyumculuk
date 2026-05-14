@@ -26,8 +26,8 @@ export function CookieBanner() {
         <Image
           src="/logo-figure.png"
           alt="Dadaş Kuyumculuk"
-          width={1024}
-          height={1047}
+          width={1037}
+          height={1024}
           className="h-12 w-auto object-contain"
         />
         <span className="font-brand font-bold text-base sm:text-lg">DADAŞ KUYUMCULUK</span>

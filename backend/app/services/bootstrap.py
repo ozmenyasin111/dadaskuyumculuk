@@ -42,6 +42,7 @@ async def hydrate_settings_cache() -> None:
                 satis_offset=m.satis_offset,
                 sort_order=m.sort_order,
                 is_readonly=m.is_readonly,
+                is_multiplier=m.is_multiplier,
             )
             for m in margins_res
         ]

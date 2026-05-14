@@ -57,4 +57,10 @@ def _compute(fiyatlar: dict, name: str) -> dict | None:
             "bid": xauusd["bid"] * TROY_OUNCES_PER_KG,
             "ask": xauusd["ask"] * TROY_OUNCES_PER_KG,
         }
+    if name == "KG_GUMUS_TL":
+        # MADEN.GUMTRY canlı, SARRAFIYE.GUMUSTRY günler eskiye düşebiliyor
+        gram = lookup_raw(fiyatlar, "MADEN.GUMTRY")
+        if not gram:
+            return None
+        return {"bid": gram["bid"] * 1000, "ask": gram["ask"] * 1000}
     return None

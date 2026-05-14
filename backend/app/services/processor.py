@@ -1,15 +1,15 @@
-"""Margin + volatility kuralı uygulayıp display fiyatları hesaplar.
+"""Margin + volatility + milyem (çarpan) kuralı uygulayıp display fiyatları hesaplar.
 
-  fark = ask - bid
-  kategori volatility kuralı varsa ve fark >= eşik ve enabled:
-      display_alis  = bid + volatility.alis_override   (admin offset ezilir)
-      display_satis = ask + volatility.satis_override
-  değilse:
-      display_alis  = bid + margin.alis_offset
-      display_satis = ask + margin.satis_offset
-
-`baseline` (oturum başı her sembolün ilk gözlemlenen `alis` değeri) ile karşılaştırarak
-`pct_change` ve `trend` hesaplanır.
+Mantık:
+  1. Has Altın display alış/satış hesaplanır:
+        fark = ask - bid
+        Has Altın için volatility eligible:
+          fark ≥ eşik ve enabled → bid + volatility.alis_override, ask + volatility.satis_override
+          değilse → bid + margin.alis_offset, ask + margin.satis_offset
+  2. Diğer satırlar için:
+        is_multiplier=true → has_altin_display × alis_milyem (alis_offset alanı milyem olarak yorumlanır)
+        is_multiplier=false ve is_readonly=false → bid + alis_offset, ask + satis_offset
+        is_readonly=true → API ham bid/ask doğrudan
 """
 
 from dataclasses import dataclass
@@ -17,31 +17,6 @@ from decimal import Decimal
 
 from app.services.symbol_map import lookup_raw
 
-
-@dataclass(frozen=True)
-class MarginRow:
-    symbol_key: str
-    display_name: str
-    category: str
-    alis_offset: Decimal
-    satis_offset: Decimal
-    sort_order: int
-    is_readonly: bool
-
-
-@dataclass(frozen=True)
-class VolatilityRule:
-    category: str
-    threshold: Decimal
-    alis_override: Decimal
-    satis_override: Decimal
-    enabled: bool
-
-
-# Volatility override (fark ≥ eşik → admin offset ezilir) sadece bu sembollere
-# uygulanır. ATA 5'li, GREMSE, 14 AYAR gibi doğal bid-ask spread'i geniş ürünler
-# bu kuraldan etkilenmez. Döviz tarafında threshold çok büyük tutulduğu için pratikte
-# tetiklenmez ama mantık çalışıyor.
 VOLATILITY_ELIGIBLE_SYMBOLS = {
     "MADEN.ALTIN",
     "DOVIZ.USDTRY",
@@ -54,6 +29,29 @@ VOLATILITY_ELIGIBLE_SYMBOLS = {
     "DOVIZ.EURUSDS",
 }
 
+HAS_ALTIN_KEY = "MADEN.ALTIN"
+
+
+@dataclass(frozen=True)
+class MarginRow:
+    symbol_key: str
+    display_name: str
+    category: str
+    alis_offset: Decimal
+    satis_offset: Decimal
+    sort_order: int
+    is_readonly: bool
+    is_multiplier: bool = False
+
+
+@dataclass(frozen=True)
+class VolatilityRule:
+    category: str
+    threshold: Decimal
+    alis_override: Decimal
+    satis_override: Decimal
+    enabled: bool
+
 
 @dataclass
 class PriceRow:
@@ -64,11 +62,44 @@ class PriceRow:
     satis: float
     raw_bid: float
     raw_ask: float
-    trend: str  # "up" | "down" | "flat"
+    trend: str
     pct_change: float
     using_volatility: bool
     is_readonly: bool
     sort_order: int
+
+
+def _has_altin_display(
+    fiyatlar: dict,
+    has_altin_row: MarginRow | None,
+    volatility: dict[str, VolatilityRule],
+) -> dict | None:
+    """Has Altın display alış/satış hesaplar — multiplier satırlar için referans."""
+    if not has_altin_row:
+        return None
+    raw = lookup_raw(fiyatlar, HAS_ALTIN_KEY)
+    if raw is None:
+        return None
+    bid = raw["bid"]
+    ask = raw["ask"]
+    fark = ask - bid
+
+    using_volatility = False
+    vol = volatility.get("ALTIN")
+    if vol and vol.enabled and fark >= float(vol.threshold):
+        alis = bid + float(vol.alis_override)
+        satis = ask + float(vol.satis_override)
+        using_volatility = True
+    else:
+        alis = bid + float(has_altin_row.alis_offset)
+        satis = ask + float(has_altin_row.satis_offset)
+    return {
+        "alis": alis,
+        "satis": satis,
+        "raw_bid": bid,
+        "raw_ask": ask,
+        "using_volatility": using_volatility,
+    }
 
 
 def compute_prices(
@@ -78,29 +109,43 @@ def compute_prices(
     baseline: dict[str, float] | None = None,
 ) -> list[PriceRow]:
     baseline = baseline or {}
+    has_altin_row = next((m for m in margins if m.symbol_key == HAS_ALTIN_KEY), None)
+    has_altin = _has_altin_display(fiyatlar, has_altin_row, volatility)
+
     out: list[PriceRow] = []
     for m in margins:
-        raw = lookup_raw(fiyatlar, m.symbol_key)
-        if raw is None:
-            continue
-        bid = raw["bid"]
-        ask = raw["ask"]
-        fark = ask - bid
-
-        using_volatility = False
-        if m.is_readonly:
-            alis = bid
-            satis = ask
+        if m.is_multiplier:
+            if has_altin is None:
+                continue
+            alis = has_altin["alis"] * float(m.alis_offset)
+            satis = has_altin["satis"] * float(m.satis_offset)
+            raw_bid = has_altin["raw_bid"]
+            raw_ask = has_altin["raw_ask"]
+            using_volatility = has_altin["using_volatility"]
         else:
-            vol = volatility.get(m.category)
-            eligible = m.symbol_key in VOLATILITY_ELIGIBLE_SYMBOLS
-            if vol and vol.enabled and eligible and fark >= float(vol.threshold):
-                alis = bid + float(vol.alis_override)
-                satis = ask + float(vol.satis_override)
-                using_volatility = True
+            raw = lookup_raw(fiyatlar, m.symbol_key)
+            if raw is None:
+                continue
+            bid = raw["bid"]
+            ask = raw["ask"]
+            raw_bid = bid
+            raw_ask = ask
+            using_volatility = False
+
+            if m.is_readonly:
+                alis = bid
+                satis = ask
             else:
-                alis = bid + float(m.alis_offset)
-                satis = ask + float(m.satis_offset)
+                fark = ask - bid
+                vol = volatility.get(m.category)
+                eligible = m.symbol_key in VOLATILITY_ELIGIBLE_SYMBOLS
+                if vol and vol.enabled and eligible and fark >= float(vol.threshold):
+                    alis = bid + float(vol.alis_override)
+                    satis = ask + float(vol.satis_override)
+                    using_volatility = True
+                else:
+                    alis = bid + float(m.alis_offset)
+                    satis = ask + float(m.satis_offset)
 
         bl = baseline.get(m.symbol_key)
         if bl is not None and bl != 0:
@@ -121,8 +166,8 @@ def compute_prices(
             category=m.category,
             alis=alis,
             satis=satis,
-            raw_bid=bid,
-            raw_ask=ask,
+            raw_bid=raw_bid,
+            raw_ask=raw_ask,
             trend=trend,
             pct_change=pct,
             using_volatility=using_volatility,
@@ -135,8 +180,6 @@ def compute_prices(
 def extract_pariteler(
     fiyatlar: dict, baseline: dict[str, float] | None = None
 ) -> list[dict]:
-    """PARITE kategorisindeki sembolleri pct/trend ile zenginleştirir.
-    `baseline` parite sembolleri için `dict[symbol, bid_baseline]`."""
     parite = fiyatlar.get("PARITE", {})
     if not isinstance(parite, dict):
         return []

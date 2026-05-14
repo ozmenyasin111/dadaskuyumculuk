@@ -18,7 +18,7 @@ export function ParitelerSection({ pariteler }: { pariteler: Parite[] }) {
         {pariteler.map((p) => (
           <div
             key={p.symbol}
-            className="grid grid-cols-[minmax(0,1fr)_4.5rem_4.5rem_3.5rem] gap-2 items-center px-4 py-3 bg-amber-50/60 border border-amber-100 rounded-lg shadow-[0_1px_2px_rgba(184,155,94,0.08)] transition-all duration-300 ease-soft hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(184,155,94,0.25)] hover:border-gold-300 hover:bg-amber-50"
+            className="grid grid-cols-[minmax(0,1fr)_4.5rem_4.5rem_4.5rem] gap-2 items-center px-4 py-3 bg-amber-50/60 border border-amber-100 rounded-lg shadow-[0_1px_2px_rgba(184,155,94,0.08)] transition-all duration-300 ease-soft hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(184,155,94,0.25)] hover:border-gold-300 hover:bg-amber-50"
           >
             <div className="font-bold text-black uppercase truncate" lang="tr">
               {p.symbol}
@@ -45,14 +45,14 @@ export function ParitelerSection({ pariteler }: { pariteler: Parite[] }) {
             </div>
             <div
               className={clsx(
-                "flex items-center justify-end gap-1 text-xs font-bold whitespace-nowrap",
+                "flex items-center justify-end gap-1 text-sm font-bold whitespace-nowrap",
                 p.trend === "up" && "text-rise",
                 p.trend === "down" && "text-fall",
                 p.trend === "flat" && "text-gray-400",
               )}
             >
-              {p.trend === "up" && <ArrowUp className="w-3.5 h-3.5" strokeWidth={3} />}
-              {p.trend === "down" && <ArrowDown className="w-3.5 h-3.5" strokeWidth={3} />}
+              {p.trend === "up" && <ArrowUp className="w-4 h-4" strokeWidth={3} />}
+              {p.trend === "down" && <ArrowDown className="w-4 h-4" strokeWidth={3} />}
               <span className="tabular-nums">
                 {p.trend === "flat" ? "—" : formatPct(p.pct_change)}
               </span>

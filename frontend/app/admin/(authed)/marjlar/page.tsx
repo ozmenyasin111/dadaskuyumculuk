@@ -1,7 +1,7 @@
 "use client";
 
 import { Info } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { api } from "@/lib/api";
 import type { Margin } from "@/lib/types";
@@ -35,7 +35,22 @@ export default function MarjlarPage() {
     }
   }
 
-  const groups = group(rows);
+  const { tlAltin, milyemAltin, doviz } = useMemo(() => {
+    const tlAltin: Margin[] = [];
+    const milyemAltin: Margin[] = [];
+    const doviz: Margin[] = [];
+    for (const r of rows) {
+      if (r.is_readonly) continue;
+      if (r.category === "DOVIZ") doviz.push(r);
+      else if (r.is_multiplier) milyemAltin.push(r);
+      else tlAltin.push(r);
+    }
+    const sortBy = (a: Margin, b: Margin) => a.sort_order - b.sort_order;
+    tlAltin.sort(sortBy);
+    milyemAltin.sort(sortBy);
+    doviz.sort(sortBy);
+    return { tlAltin, milyemAltin, doviz };
+  }, [rows]);
 
   return (
     <div>
@@ -50,90 +65,117 @@ export default function MarjlarPage() {
             <Info className="w-4 h-4" />
           </div>
           <div className="text-sm text-gray-800 leading-relaxed">
-            <div className="font-bold text-black text-base mb-2">
-              Önemli Not
-            </div>
+            <div className="font-bold text-black text-base mb-2">Önemli Not</div>
             <p className="mb-2">
-              Müşteriye gösterilen fiyatlar <b>Harem Altın</b>&apos;dan canlı olarak çekilir.
-              Aşağıda her ürün için girdiğiniz değerler, Harem Altın fiyatlarının
-              üzerine otomatik olarak uygulanır. Piyasa aniden hareketlenirse bu
-              değerler <b>geçici olarak geçersiz olur</b> ve <b>Volatilite</b> ekranındaki
-              güvenli değerler devreye girer.
+              Müşteriye gösterilen fiyatlar <b>Harem Altın&apos;ın veri sağlayıcısından</b>{" "}
+              çekilir ve aşağıdaki ekranda girilecek değerlere göre hesaplama
+              yapılarak gösterilir. İki tür hesaplama vardır:
             </p>
-            <ul className="list-disc pl-5 space-y-1 mb-2">
+            <ul className="list-disc pl-5 space-y-1 text-xs">
               <li>
-                <b className="text-fall">Alış kutusu</b>: Harem Altın alış fiyatından
-                <b> bu miktar çıkarılır</b> (otomatik − işareti).
+                <b>Has Altın &amp; Gümüş Kg (TL bazlı):</b> Girdiğiniz miktar Harem alışından
+                <b className="text-fall"> çıkarılır</b>, satışına <b className="text-rise">eklenir</b>.
               </li>
               <li>
-                <b className="text-rise">Satış kutusu</b>: Harem Altın satış fiyatına
-                <b> bu miktar eklenir</b> (otomatik + işareti).
+                <b>Diğer altınlar (milyem):</b> <b>Bizim Has Altın fiyatımız × girdiğiniz milyem</b> ile hesaplanır.
+                Has Altın volatiliteden etkilenirse bu ürünler de <b>otomatik olarak</b> aynı korumadan faydalanır.
+              </li>
+              <li>
+                <b>Döviz (TL bazlı):</b> Has Altın gibi alış&apos;tan çıkarılır, satış&apos;a eklenir.
               </li>
             </ul>
-            <p className="text-xs text-gray-600">
-              Örnek: Harem Altın&apos;da Has Altın alış 6.800 / satış 6.840 ise;
-              alış kutusuna 20, satış kutusuna 20 yazarsanız müşteri ekranında
-              <b className="tabular-nums"> 6.780 / 6.860</b> görür.
+            <p className="text-xs text-gray-600 mt-2">
+              Örnek: Harem Has Altın 6.800/6.840 + sizin offset -10/+40 → bizim Has Altın 6.790/6.880.
+              Yeni Çeyrek milyemleri 1.62/1.6540 → ekrana çıkar: <b className="tabular-nums">11.000 / 11.380</b>.
             </p>
           </div>
         </div>
       </div>
 
-      {Object.entries(groups).map(([category, items]) => (
-        <section key={category} className="mb-8">
-          <h2 className="text-sm uppercase text-gray-500 mb-2 tracking-wider font-bold">
-            {labelFor(category)}
-          </h2>
-          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-            <div className="grid grid-cols-12 gap-2 bg-gray-50 px-4 py-2 text-xs uppercase font-bold text-gray-500">
-              <div className="col-span-5">Ürün</div>
-              <div className="col-span-3 text-right">Alıştan çıkarılacak</div>
-              <div className="col-span-3 text-right">Satışa eklenecek</div>
-              <div className="col-span-1 text-right">Kaydet</div>
-            </div>
-            {items.map((row) => (
-              <MarginRow
-                key={row.id}
-                row={row}
-                saving={savingId === row.id}
-                onChange={(patch) =>
-                  setRows((prev) =>
-                    prev.map((r) => (r.id === row.id ? { ...r, ...patch } : r))
-                  )
-                }
-                onSave={() => save(row)}
-              />
-            ))}
-          </div>
-        </section>
-      ))}
+      <Group title="Has Altın & Gümüş Kg (TL bazlı kâr)">
+        <TableHeader mode="tl" />
+        {tlAltin.map((row) => (
+          <RowEditor
+            key={row.id}
+            row={row}
+            mode="tl"
+            saving={savingId === row.id}
+            onChange={(patch) =>
+              setRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, ...patch } : r)))
+            }
+            onSave={() => save(row)}
+          />
+        ))}
+      </Group>
+
+      <Group title="Diğer Altınlar (milyem)">
+        <TableHeader mode="milyem" />
+        {milyemAltin.map((row) => (
+          <RowEditor
+            key={row.id}
+            row={row}
+            mode="milyem"
+            saving={savingId === row.id}
+            onChange={(patch) =>
+              setRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, ...patch } : r)))
+            }
+            onSave={() => save(row)}
+          />
+        ))}
+      </Group>
+
+      <Group title="Döviz (TL bazlı kâr)">
+        <TableHeader mode="tl" />
+        {doviz.map((row) => (
+          <RowEditor
+            key={row.id}
+            row={row}
+            mode="tl"
+            saving={savingId === row.id}
+            onChange={(patch) =>
+              setRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, ...patch } : r)))
+            }
+            onSave={() => save(row)}
+          />
+        ))}
+      </Group>
     </div>
   );
 }
 
-function group(rows: Margin[]): Record<string, Margin[]> {
-  const g: Record<string, Margin[]> = {};
-  for (const r of rows) {
-    if (r.is_readonly) continue;
-    (g[r.category] ||= []).push(r);
-  }
-  for (const k of Object.keys(g)) g[k].sort((a, b) => a.sort_order - b.sort_order);
-  return g;
+function Group({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section className="mb-8">
+      <h2 className="text-sm uppercase text-gray-500 mb-2 tracking-wider font-bold">{title}</h2>
+      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">{children}</div>
+    </section>
+  );
 }
 
-function labelFor(cat: string): string {
-  if (cat === "ALTIN") return "Sarrafiye & Gram Altın";
-  if (cat === "DOVIZ") return "Döviz";
-  return cat;
+function TableHeader({ mode }: { mode: "tl" | "milyem" }) {
+  return (
+    <div className="grid grid-cols-12 gap-2 bg-gray-50 px-4 py-2 text-xs uppercase font-bold text-gray-500">
+      <div className="col-span-5">Ürün</div>
+      <div className="col-span-3 text-right">
+        {mode === "tl" ? "Alıştan çıkarılacak" : "Alış Milyemi"}
+      </div>
+      <div className="col-span-3 text-right">
+        {mode === "tl" ? "Satışa eklenecek" : "Satış Milyemi"}
+      </div>
+      <div className="col-span-1 text-right">Kaydet</div>
+    </div>
+  );
 }
 
-function MarginRow({
+function RowEditor({
   row,
+  mode,
   saving,
   onChange,
   onSave,
 }: {
   row: Margin;
+  mode: "tl" | "milyem";
   saving: boolean;
   onChange: (p: Partial<Margin>) => void;
   onSave: () => void;
@@ -142,36 +184,34 @@ function MarginRow({
     <div className="grid grid-cols-12 gap-2 items-center px-4 py-2.5 border-b border-gray-100">
       <div className="col-span-5 text-gray-800 font-semibold">{row.display_name}</div>
       <div className="col-span-3">
-        <div className="relative">
-          <span className="absolute left-2 top-1/2 -translate-y-1/2 text-fall font-bold pointer-events-none">
-            −
-          </span>
-          <input
-            type="number"
-            step="any"
+        {mode === "tl" ? (
+          <PrefixInput
+            prefix="−"
+            prefixColor="text-fall"
             value={absValue(row.alis_offset)}
-            onChange={(e) =>
-              onChange({ alis_offset: negative(e.target.value) })
-            }
-            className="w-full pl-6 pr-2 py-1.5 text-right tabular-nums border border-gray-300 rounded focus:ring-2 focus:ring-gold-500 focus:border-gold-500 outline-none"
+            onChange={(v) => onChange({ alis_offset: negative(v) })}
           />
-        </div>
+        ) : (
+          <PlainInput
+            value={row.alis_offset}
+            onChange={(v) => onChange({ alis_offset: v })}
+          />
+        )}
       </div>
       <div className="col-span-3">
-        <div className="relative">
-          <span className="absolute left-2 top-1/2 -translate-y-1/2 text-rise font-bold pointer-events-none">
-            +
-          </span>
-          <input
-            type="number"
-            step="any"
+        {mode === "tl" ? (
+          <PrefixInput
+            prefix="+"
+            prefixColor="text-rise"
             value={absValue(row.satis_offset)}
-            onChange={(e) =>
-              onChange({ satis_offset: positive(e.target.value) })
-            }
-            className="w-full pl-6 pr-2 py-1.5 text-right tabular-nums border border-gray-300 rounded focus:ring-2 focus:ring-gold-500 focus:border-gold-500 outline-none"
+            onChange={(v) => onChange({ satis_offset: positive(v) })}
           />
-        </div>
+        ) : (
+          <PlainInput
+            value={row.satis_offset}
+            onChange={(v) => onChange({ satis_offset: v })}
+          />
+        )}
       </div>
       <div className="col-span-1 text-right">
         <button
@@ -183,6 +223,54 @@ function MarginRow({
         </button>
       </div>
     </div>
+  );
+}
+
+function PrefixInput({
+  prefix,
+  prefixColor,
+  value,
+  onChange,
+}: {
+  prefix: string;
+  prefixColor: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div className="relative">
+      <span
+        className={`absolute left-2 top-1/2 -translate-y-1/2 font-bold pointer-events-none ${prefixColor}`}
+      >
+        {prefix}
+      </span>
+      <input
+        type="number"
+        step="any"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full pl-6 pr-2 py-1.5 text-right tabular-nums border border-gray-300 rounded focus:ring-2 focus:ring-gold-500 focus:border-gold-500 outline-none"
+      />
+    </div>
+  );
+}
+
+function PlainInput({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <input
+      type="number"
+      step="any"
+      min="0"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="w-full px-2 py-1.5 text-right tabular-nums border border-gray-300 rounded focus:ring-2 focus:ring-gold-500 focus:border-gold-500 outline-none"
+    />
   );
 }
 
