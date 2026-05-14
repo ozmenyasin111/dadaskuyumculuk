@@ -5,7 +5,7 @@
     "dockerfilePath": "Dockerfile"
   },
   "deploy": {
-    "startCommand": "alembic upgrade head && uvicorn app.main:asgi --host 0.0.0.0 --port $PORT --proxy-headers",
+    "startCommand": "sh /app/start.sh",
     "healthcheckPath": "/healthz",
     "healthcheckTimeout": 120,
     "restartPolicyType": "ON_FAILURE",
