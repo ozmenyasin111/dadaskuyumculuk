@@ -26,7 +26,7 @@ export default function KvkkPage() {
       <h2 className="font-bold text-black text-lg mt-6">Haklarınız</h2>
       <p>
         KVKK&apos;nın 11. maddesi kapsamında, kişisel verilerinize ilişkin haklarınızı
-        kullanmak için 0212 553 45 25 numarası üzerinden bizimle iletişime
+        kullanmak için 0212 557 25 25 numarası üzerinden bizimle iletişime
         geçebilirsiniz.
       </p>
       <p className="text-xs text-gray-500 italic mt-8">

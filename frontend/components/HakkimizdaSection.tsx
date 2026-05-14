@@ -39,7 +39,7 @@ export function HakkimizdaSection() {
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
         <a
-          href="tel:02125534525"
+          href="tel:02125572525"
           className="flex items-center gap-3 bg-gray-50 hover:bg-gold-50 border border-gray-200 rounded-lg px-4 py-3 transition-colors"
         >
           <div className="w-10 h-10 rounded-full bg-gold-100 text-gold-700 flex items-center justify-center">
@@ -50,7 +50,7 @@ export function HakkimizdaSection() {
               Telefon
             </div>
             <div className="font-bold text-black tabular-nums">
-              0212 553 45 25
+              0212 557 25 25
             </div>
           </div>
         </a>

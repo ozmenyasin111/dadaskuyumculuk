@@ -71,18 +71,18 @@ export function TopBar() {
             Hakkımızda
           </a>
           <a
-            href="tel:02125534525"
+            href="tel:02125572525"
             className={`${NAV_BTN} inline-flex items-center gap-2`}
           >
             <Phone className="w-4 h-4" />
-            <span className="tabular-nums">0212 553 45 25</span>
+            <span className="tabular-nums">0212 557 25 25</span>
           </a>
         </nav>
 
         {/* Mobil — telefon ikonu + hamburger */}
         <div className="flex sm:hidden items-center gap-2">
           <a
-            href="tel:02125534525"
+            href="tel:02125572525"
             aria-label="Ara"
             className="w-10 h-10 rounded bg-gold-500 hover:bg-gold-600 text-white flex items-center justify-center"
           >
@@ -130,12 +130,12 @@ export function TopBar() {
                 Hakkımızda
               </a>
               <a
-                href="tel:02125534525"
+                href="tel:02125572525"
                 onClick={() => setMenuOpen(false)}
                 className="bg-gold-500 hover:bg-gold-600 text-white font-bold rounded px-4 py-3 text-sm transition-colors text-center inline-flex items-center justify-center gap-2"
               >
                 <Phone className="w-4 h-4" />
-                <span className="tabular-nums">0212 553 45 25</span>
+                <span className="tabular-nums">0212 557 25 25</span>
               </a>
             </div>
           </nav>

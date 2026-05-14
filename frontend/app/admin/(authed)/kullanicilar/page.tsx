@@ -70,7 +70,7 @@ export default function KullanicilarPage() {
 
       <form
         onSubmit={add}
-        className="bg-white rounded-lg border border-gray-200 p-4 mb-6 flex gap-3 items-end"
+        className="bg-white rounded-lg border border-gray-200 p-4 mb-6 flex flex-col sm:flex-row gap-3 sm:items-end"
       >
         <label className="flex-1">
           <span className="text-xs text-gray-600 mb-1 block">Kullanıcı adı</span>
@@ -96,14 +96,14 @@ export default function KullanicilarPage() {
         </label>
         <button
           type="submit"
-          className="px-4 py-2 bg-gold-500 hover:bg-gold-600 text-white rounded font-medium transition-colors"
+          className="px-4 py-2 bg-gold-500 hover:bg-gold-600 text-white rounded font-medium transition-colors w-full sm:w-auto"
         >
           Ekle
         </button>
       </form>
 
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-        <div className="grid grid-cols-12 gap-2 bg-gray-50 px-4 py-2 text-xs uppercase text-gray-500">
+        <div className="hidden sm:grid sm:grid-cols-12 sm:gap-2 bg-gray-50 px-4 py-2 text-xs uppercase text-gray-500">
           <div className="col-span-3">Kullanıcı</div>
           <div className="col-span-4">Oluşturulma</div>
           <div className="col-span-3">Son giriş</div>
@@ -112,18 +112,20 @@ export default function KullanicilarPage() {
         {users.map((u) => (
           <div
             key={u.id}
-            className="grid grid-cols-12 gap-2 items-center px-4 py-2.5 border-b border-gray-100"
+            className="flex flex-col gap-1.5 sm:grid sm:grid-cols-12 sm:gap-2 sm:items-center px-4 py-3 border-b border-gray-100"
           >
-            <div className="col-span-3 font-medium text-gray-800">{u.username}</div>
-            <div className="col-span-4 text-sm text-gray-600 tabular-nums">
+            <div className="sm:col-span-3 font-bold text-gray-800">{u.username}</div>
+            <div className="sm:col-span-4 text-xs sm:text-sm text-gray-600 tabular-nums">
+              <span className="sm:hidden font-semibold text-gray-500">Oluşturulma: </span>
               {new Date(u.created_at).toLocaleString("tr-TR")}
             </div>
-            <div className="col-span-3 text-sm text-gray-600 tabular-nums">
+            <div className="sm:col-span-3 text-xs sm:text-sm text-gray-600 tabular-nums">
+              <span className="sm:hidden font-semibold text-gray-500">Son giriş: </span>
               {u.last_login
                 ? new Date(u.last_login).toLocaleString("tr-TR")
                 : "—"}
             </div>
-            <div className="col-span-2 flex items-center justify-end gap-2">
+            <div className="sm:col-span-2 flex items-center justify-start sm:justify-end gap-2 mt-2 sm:mt-0">
               <button
                 onClick={() => changePassword(u.id)}
                 className="text-xs px-2 py-1 text-gold-700 hover:bg-gold-50 rounded"

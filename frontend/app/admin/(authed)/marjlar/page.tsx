@@ -154,7 +154,7 @@ function Group({ title, children }: { title: string; children: React.ReactNode }
 
 function TableHeader({ mode }: { mode: "tl" | "milyem" }) {
   return (
-    <div className="grid grid-cols-12 gap-2 bg-gray-50 px-4 py-2 text-xs uppercase font-bold text-gray-500">
+    <div className="hidden sm:grid sm:grid-cols-12 sm:gap-2 bg-gray-50 px-4 py-2 text-xs uppercase font-bold text-gray-500">
       <div className="col-span-5">Ürün</div>
       <div className="col-span-3 text-right">
         {mode === "tl" ? "Alıştan çıkarılacak" : "Alış Milyemi"}
@@ -181,43 +181,51 @@ function RowEditor({
   onSave: () => void;
 }) {
   return (
-    <div className="grid grid-cols-12 gap-2 items-center px-4 py-2.5 border-b border-gray-100">
-      <div className="col-span-5 text-gray-800 font-semibold">{row.display_name}</div>
-      <div className="col-span-3">
-        {mode === "tl" ? (
-          <PrefixInput
-            prefix="−"
-            prefixColor="text-fall"
-            value={absValue(row.alis_offset)}
-            onChange={(v) => onChange({ alis_offset: negative(v) })}
-          />
-        ) : (
-          <PlainInput
-            value={row.alis_offset}
-            onChange={(v) => onChange({ alis_offset: v })}
-          />
-        )}
+    <div className="flex flex-col gap-2 sm:grid sm:grid-cols-12 sm:gap-2 sm:items-center px-4 py-3 border-b border-gray-100">
+      <div className="sm:col-span-5 text-gray-800 font-semibold">{row.display_name}</div>
+      <div className="grid grid-cols-2 gap-2 sm:contents">
+        <div className="sm:col-span-3">
+          <span className="block sm:hidden text-[10px] uppercase font-bold text-gray-500 mb-1">
+            {mode === "tl" ? "Alıştan çıkarılacak" : "Alış Milyemi"}
+          </span>
+          {mode === "tl" ? (
+            <PrefixInput
+              prefix="−"
+              prefixColor="text-fall"
+              value={absValue(row.alis_offset)}
+              onChange={(v) => onChange({ alis_offset: negative(v) })}
+            />
+          ) : (
+            <PlainInput
+              value={row.alis_offset}
+              onChange={(v) => onChange({ alis_offset: v })}
+            />
+          )}
+        </div>
+        <div className="sm:col-span-3">
+          <span className="block sm:hidden text-[10px] uppercase font-bold text-gray-500 mb-1">
+            {mode === "tl" ? "Satışa eklenecek" : "Satış Milyemi"}
+          </span>
+          {mode === "tl" ? (
+            <PrefixInput
+              prefix="+"
+              prefixColor="text-rise"
+              value={absValue(row.satis_offset)}
+              onChange={(v) => onChange({ satis_offset: positive(v) })}
+            />
+          ) : (
+            <PlainInput
+              value={row.satis_offset}
+              onChange={(v) => onChange({ satis_offset: v })}
+            />
+          )}
+        </div>
       </div>
-      <div className="col-span-3">
-        {mode === "tl" ? (
-          <PrefixInput
-            prefix="+"
-            prefixColor="text-rise"
-            value={absValue(row.satis_offset)}
-            onChange={(v) => onChange({ satis_offset: positive(v) })}
-          />
-        ) : (
-          <PlainInput
-            value={row.satis_offset}
-            onChange={(v) => onChange({ satis_offset: v })}
-          />
-        )}
-      </div>
-      <div className="col-span-1 text-right">
+      <div className="sm:col-span-1 sm:text-right">
         <button
           onClick={onSave}
           disabled={saving}
-          className="px-3 py-1.5 bg-gold-500 hover:bg-gold-600 text-white text-xs rounded font-bold transition-colors disabled:opacity-50"
+          className="w-full sm:w-auto px-3 py-2 sm:py-1.5 bg-gold-500 hover:bg-gold-600 text-white text-xs rounded font-bold transition-colors disabled:opacity-50"
         >
           {saving ? "…" : "Kaydet"}
         </button>
