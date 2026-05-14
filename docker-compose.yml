@@ -1,0 +1,62 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: dadas
+      POSTGRES_PASSWORD: dadas_dev
+      POSTGRES_DB: dadaskuyumculuk
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dadas -d dadaskuyumculuk"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+asyncpg://dadas:dadas_dev@postgres:5432/dadaskuyumculuk
+      FINANSVERI_API_KEY: ${FINANSVERI_API_KEY}
+      FINANSVERI_BASE_URL: https://api.finansveri.com
+      JWT_SECRET: ${JWT_SECRET:-dev_change_me_super_secret_jwt_signing_key_at_least_32_chars}
+      JWT_EXPIRES_HOURS: "168"
+      CORS_ORIGINS: "http://localhost:3000"
+      ADMIN_BOOTSTRAP_USERNAME: ${ADMIN_BOOTSTRAP_USERNAME:-admin}
+      ADMIN_BOOTSTRAP_PASSWORD: ${ADMIN_BOOTSTRAP_PASSWORD:-admin123}
+      POLL_INTERVAL_SECONDS: "1"
+      ENV: dev
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./backend:/app
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: base
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8001
+      NEXT_PUBLIC_SOCKET_URL: http://localhost:8001
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+
+volumes:
+  postgres_data:

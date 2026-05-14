@@ -1,0 +1,218 @@
+Anasayfa
+FinansAPI ile neler sunuyoruz?
+Kurumsal ve geliştirici odaklı piyasa verisi: tek sözleşme altında REST ve canlı akış ile döviz, kıymetli maden ve altın türevi fiyatlarına erişin.
+
+REST API
+
+GET /v1/fiyatlar ile tek istekte güncel özet JSON: tüm kategoriler ve semboller tek yanıtta.
+
+Canlı akış (Socket.io)
+
+Web ve mobil istemciler için düşük gecikmeli güncelleme: prices olayı ile anlık paket yayını (API anahtarı ile kimlik doğrulama).
+
+Veri kapsamı
+Piyasa grupları: döviz çiftleri, maden, gram altın vb. kategoriler altında düzenlenmiş semboller.
+Her sembol için: alış / satış (bid, ask) ve isteğe bağlı zaman damgası; yanıtta son güncelleme zamanı (guncellendi).
+Rate limit ve kullanım
+Her API anahtarı için saniyede istek üst sınırı (ör. istek/sn) tanımlanır; limitler hesabınıza ve sözleşmeye göre yönetilir. Çok sık istekte 429 dönebilir. IP ve alan adı kısıtları isteğe bağlı uygulanabilir.
+
+Tipik kullanım alanları: fiyat ekranları ve mobil uygulamalar, kurumsal ERP ve raporlama, risk ve treasury araçları, iç panolar ve TV ticker, otomasyon ve entegrasyon servisleri.
+
+Ana sayfa/Genel dokümantasyon
+FinansAPI
+
+Genel dokümantasyon
+Sunulan API türleri, veri modeli özeti, kullanım sınırları ve tipik entegrasyon senaryoları. Teknik istek örnekleri ve anahtarınızla deneme için giriş yapın ve müşteri panelindeki API dokümantasyonu sayfasını kullanın.
+
+Sunulan API çeşitleri
+Aynı piyasa verisi farklı entegrasyon ihtiyaçları için iki ana kanaldan sunulur:
+
+REST (HTTP)
+GET /v1/fiyatlar ile anlık özet JSON alırsınız. Sunucu taraflı, mobil ve batch işler için uygundur; tek yanıtta tüm kategoriler ve semboller yer alır.
+
+Canlı akış (Socket.io)
+Tarayıcı ve gerçek zamanlı uygulamalar için prices olayı üzerinden güncel fiyatlar paketi yayınlanır. Bağlantı API anahtarı ile doğrulanır.
+
+API’de sağlanan veriler
+Yanıt gövdesinde üst düzey bir fiyatlar nesnesi bulunur. Yapı kabaca şöyledir:
+
+Kategoriler: Her üst anahtar bir piyasa grubudur (ör. döviz, maden, gram altın). Kaynakta grup bilgisi yoksa semboller DIGER altında toplanabilir.
+Semboller: Kategori altında sembol adı → bid (alış), ask (satış), isteğe bağlı timestamp.
+Meta: guncellendi alanı paketin son güncellenme zamanını (ms) gösterir.
+Tek sembol için ayrı bir REST uç noktası yoktur; istemci tarafında JSON içinden ilgili kategori ve sembol seçilir. Detaylı kod örnekleri paneldeki teknik dokümantasyondadır.
+
+Rate limit ve güvenlik
+Her müşteri hesabına atanmış API anahtarı için saniyede istek üst sınırı (rate limit) uygulanır; değer yönetim panelinden hesaba göre yapılandırılır. Limit aşıldığında 429 Too Many Requests dönebilirsiniz.
+
+İsteğe bağlı olarak IP adresi ve alan adı allowlist ile anahtarınızın yalnızca belirttiğiniz ortamlardan kullanılması kısıtlanabilir.
+
+Anahtar süresi dolduğunda veya pasifleştirildiğinde erişim reddedilir (403).
+
+Kullanım alanları
+Perakende ve kurumsal fiyat ekranları, mobil uygulamalar
+İç panolar, operasyon ve treasury raporları
+ERP ve back-office entegrasyonları
+Medya ve yayın (ticker, canlı grafik beslemesi)
+Otomasyon, bot ve arka plan servisleri
+
+Panel/API dokümantasyonu
+Teknik entegrasyon
+
+API dokümantasyonu
+Bu sayfa istek örnekleri, yanıt yapısı ve hata kodlarını içerir. Ürün özeti, sunulan API türleri, veri kapsamı ve kullanım alanları için ana sayfa ile genel dokümantasyonsayfasına bakın.
+
+Kimlik doğrulama
+Tüm /v1 isteklerinde geçerli API anahtarınızı başlıkta gönderin:
+
+X-API-Key: <sizin_anahtarınız>
+Anahtarınızı müşteri panelinden kopyalayın. Süre dolmuş veya pasif anahtarlarda 403 alırsınız.
+
+Tüm fiyatlar (tek uç)
+Sunucu tek bir özet JSON döner; sembol bazlı ayrı REST uç noktası yoktur. Tümünü alıp uygulamanızda kategori/sembol seçersiniz.
+
+GET https://api.finansveri.com/v1/fiyatlar
+Tarayıcıdan site üzerinden istek atarken kök adres genelde /api/backend proxy ile aynı origin’e gider; sunucu taraflı veya mobil uygulamada doğrudan https://api.finansveri.com kullanın.
+
+cURL
+curl -sS "https://api.finansveri.com/v1/fiyatlar" \
+  -H "X-API-Key: YOUR_API_KEY"
+Node.js (fetch)
+const res = await fetch("https://api.finansveri.com/v1/fiyatlar", {
+  headers: { "X-API-Key": process.env.API_KEY }
+});
+const { fiyatlar, guncellendi } = await res.json();
+// Tüm veri: fiyatlar
+// Tek kategori: fiyatlar["DOVIZ"]
+// Tek sembol: fiyatlar["DOVIZ"]?.["USDTRY"]
+Python
+import os, requests
+r = requests.get(
+    "https://api.finansveri.com/v1/fiyatlar",
+    headers={"X-API-Key": os.environ["API_KEY"]},
+    timeout=30,
+)
+data = r.json()
+usd = data["fiyatlar"].get("DOVIZ", {}).get("USDTRY")
+Yanıt yapısı
+Gövde kabaca şöyledir: üst düzey fiyatlar bir nesnedir; anahtarlar piyasa gruplarıdır (ör. DOVIZ, MADEN, GRAM ALTIN). Her grubun altında sembol adı → bid, ask, isteğe bağlı timestamp.
+
+{
+  "fiyatlar": {
+    "DOVIZ": {
+      "USDTRY": { "bid": 39.05, "ask": 39.12, "timestamp": 1710000000000 }
+    },
+    "MADEN": {
+      "ALTIN": { "bid": 6797.78, "ask": 6834.18, "timestamp": 1710000000000 },
+      "XAUUSD": { "bid": 2361.12, "ask": 2361.57, "timestamp": 1710000000000 }
+    },
+    "GRAM ALTIN": {
+      "GA10": { "bid": 123.11, "ask": 124.04, "timestamp": 1710000000000 }
+    },
+    "SARRAFIYE": {
+      "YENI_CEYREK": { "bid": 6482.1, "ask": 6620.6, "timestamp": 1710000000000 }
+    }
+  },
+  "guncellendi": 1710000000123
+}
+Kategori adları kaynak akışına göre değişebilir. Bazı kaynaklarda SARRAFIYE yerine SARAFIYE gelebilir.
+
+Tek sembol / tek kategori
+Ayrı bir URL yok: aynı GET yanıtından ilgili dalı seçin.
+
+const { fiyatlar } = await res.json();
+const usdtry = fiyatlar?.["DOVIZ"]?.["USDTRY"];
+const bid = usdtry?.bid;
+const ask = usdtry?.ask;
+Maden altın satırı örneği:
+
+const { fiyatlar } = await res.json();
+const altin = fiyatlar?.["MADEN"]?.["ALTIN"];
+const bid = altin?.bid; // alış
+const ask = altin?.ask; // satış
+Sembol adları kaynak veriye göre değişebilir; önce bir kez tam listeyi alıp yapıyı doğrulamanız önerilir.
+
+Kategori / sembol keşfi
+const { fiyatlar } = await res.json();
+const kategoriler = Object.keys(fiyatlar || {});
+const madenSembolleri = Object.keys(fiyatlar?.["MADEN"] || {});
+console.log({ kategoriler, madenSembolleri });
+Socket.io (canlı)
+Sunucu Socket.io kullanır. İstemci olarak socket.io-clientpaketi ile kök URL'ye bağlanın (path /socket.io/ otomatik). Kimlik için auth.apiKey kullanılır.
+
+import { io } from "socket.io-client";
+
+const socket = io("https://api.finansveri.com", {
+  auth: { apiKey: "YOUR_API_KEY" },
+  transports: ["websocket", "polling"],
+});
+
+socket.on("connect", () => console.log("socket.io bağlandı"));
+socket.on("prices", (fiyatlar) => {
+  console.log("Güncel paket:", fiyatlar);
+});
+socket.on("disconnect", (reason) => console.log("bağlantı kesildi:", reason));
+socket.on("reconnect_attempt", (n) => console.log("yeniden bağlanma:", n));
+socket.on("connect_error", (err) => console.error(err.message));
+Event sözleşmesi
+
+connect — Bağlantı kuruldu.
+prices — Güncel fiyat paketi.
+disconnect — Bağlantı kesildi.
+connect_error — Yetki/bağlantı hatası.
+reconnect_attempt — İstemci yeniden bağlanmayı deniyor.
+Yalnızca WebSocket transport: transports: ["websocket"], upgrade: false.
+
+import { io } from "socket.io-client";
+
+const socket = io("https://api.finansveri.com", {
+  auth: { apiKey: "YOUR_API_KEY" },
+  transports: ["websocket"],
+  upgrade: false,
+});
+
+socket.on("prices", (fiyatlar) => {
+  /* aynı prices olayı */
+});
+Ham new WebSocket(url) Socket.io ile doğrudan uyumlu değildir; tarayıcıda gördüğünüz çerçeve Engine.io tabanlıdır.
+
+Sık hata kodları
+401 — API anahtarı gönderilmedi.
+403 — Geçersiz, pasif süresi dolmuş veya IP/domain kısıtı.
+429 — Çok fazla istek (rate limit).
+{
+  "error": "Rate limit asildi",
+  "code": "RATE_LIMIT"
+}
+Varsayılan limit tipik olarak saniyede 1 istektir. 429 durumunda kısa bekleme + artan gecikme (exponential backoff) ile tekrar deneyin.
+
+async function getFiyatlar(apiKey, maxRetry = 3) {
+  let waitMs = 1000;
+  for (let i = 0; i <= maxRetry; i++) {
+    const res = await fetch("https://api.finansveri.com/v1/fiyatlar", {
+      headers: { "X-API-Key": apiKey },
+    });
+    if (res.status !== 429) return res;
+    if (i === maxRetry) throw new Error("429: rate limit");
+    await new Promise((r) => setTimeout(r, waitMs));
+    waitMs *= 2; // 1sn, 2sn, 4sn...
+  }
+}
+
+buda benim api anahtarım 
+
+API anahtarları
+Onay sonrası oluşturulan anahtarlar. Pasif ise yönetici ile iletişime geçin.
+
+Public API URL
+
+https://api.finansveri.com
+Kopyala
+Örnek istek: GET https://api.finansveri.com/v1/fiyatlar (header: X-API-Key) — Detaylı API dokümantasyonu
+
+802ba08a5941ffe8e2abf6197aab1b74a26d241504514dce9a78d30098ce9590
+Aktif
+Kopyala
+Anahtar oluşturulma
+13.05.2026 21:23
+Kullanım bitişi
+20.05.2026 21:23
