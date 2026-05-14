@@ -110,24 +110,28 @@ export function TopBar() {
             <div className="flex flex-col p-4 gap-2">
               <a
                 href="/#pariteler"
+                onClick={() => setMenuOpen(false)}
                 className="bg-gold-500 hover:bg-gold-600 text-white font-bold rounded px-4 py-3 text-sm transition-colors text-center"
               >
                 Pariteler
               </a>
               <Link
                 href="/zekat"
+                onClick={() => setMenuOpen(false)}
                 className="bg-gold-500 hover:bg-gold-600 text-white font-bold rounded px-4 py-3 text-sm transition-colors text-center"
               >
                 Zekat Hesapla
               </Link>
               <a
                 href="/#hakkimizda"
+                onClick={() => setMenuOpen(false)}
                 className="bg-gold-500 hover:bg-gold-600 text-white font-bold rounded px-4 py-3 text-sm transition-colors text-center"
               >
                 Hakkımızda
               </a>
               <a
                 href="tel:02125534525"
+                onClick={() => setMenuOpen(false)}
                 className="bg-gold-500 hover:bg-gold-600 text-white font-bold rounded px-4 py-3 text-sm transition-colors text-center inline-flex items-center justify-center gap-2"
               >
                 <Phone className="w-4 h-4" />
