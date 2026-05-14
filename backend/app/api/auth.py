@@ -23,13 +23,16 @@ async def login(payload: LoginIn, response: Response, db: DbDep) -> MeOut:
     await db.commit()
 
     token = make_token(user.id, user.username)
+    # Frontend ve backend farklı origin'lerde (Railway *.up.railway.app + custom domain) —
+    # cross-site fetch'te cookie gönderilebilmesi için SameSite=None + Secure gerek.
+    is_prod = settings.env != "dev"
     response.set_cookie(
         key="access_token",
         value=token,
         max_age=COOKIE_MAX_AGE,
         httponly=True,
-        samesite="lax",
-        secure=settings.env != "dev",
+        samesite="none" if is_prod else "lax",
+        secure=is_prod,
         path="/",
     )
     return MeOut(id=user.id, username=user.username)
@@ -37,7 +40,13 @@ async def login(payload: LoginIn, response: Response, db: DbDep) -> MeOut:
 
 @router.post("/logout")
 async def logout(response: Response) -> dict[str, bool]:
-    response.delete_cookie("access_token", path="/")
+    is_prod = settings.env != "dev"
+    response.delete_cookie(
+        "access_token",
+        path="/",
+        samesite="none" if is_prod else "lax",
+        secure=is_prod,
+    )
     return {"ok": True}
 
 
