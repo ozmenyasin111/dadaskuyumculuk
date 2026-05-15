@@ -40,7 +40,7 @@ def _vol(category: str, threshold: float, alis: float, satis: float, enabled: bo
 
 
 def test_normal_offset_applied(sample_fiyatlar):
-    margins = [_margin("MADEN.ALTIN", "Has Altın", "ALTIN", -20, 20)]
+    margins = [_margin("SARRAFIYE.KULCEALTIN", "Gram Altın", "ALTIN", -20, 20)]
     volatility = {"ALTIN": _vol("ALTIN", 500, -200, 300)}
     rows = compute_prices(sample_fiyatlar, margins, volatility)
     assert len(rows) == 1
@@ -51,7 +51,7 @@ def test_normal_offset_applied(sample_fiyatlar):
 
 
 def test_volatility_override_applied_when_fark_exceeds_threshold(volatile_fiyatlar):
-    margins = [_margin("MADEN.ALTIN", "Has Altın", "ALTIN", -20, 20)]
+    margins = [_margin("SARRAFIYE.KULCEALTIN", "Gram Altın", "ALTIN", -20, 20)]
     volatility = {"ALTIN": _vol("ALTIN", 500, -200, 300)}
     rows = compute_prices(volatile_fiyatlar, margins, volatility)
     row = rows[0]
@@ -61,7 +61,7 @@ def test_volatility_override_applied_when_fark_exceeds_threshold(volatile_fiyatl
 
 
 def test_volatility_disabled_falls_back_to_admin_offset(volatile_fiyatlar):
-    margins = [_margin("MADEN.ALTIN", "Has Altın", "ALTIN", -20, 20)]
+    margins = [_margin("SARRAFIYE.KULCEALTIN", "Gram Altın", "ALTIN", -20, 20)]
     volatility = {"ALTIN": _vol("ALTIN", 500, -200, 300, enabled=False)}
     rows = compute_prices(volatile_fiyatlar, margins, volatility)
     assert rows[0].using_volatility is False
@@ -69,7 +69,7 @@ def test_volatility_disabled_falls_back_to_admin_offset(volatile_fiyatlar):
 
 
 def test_readonly_row_returns_raw(sample_fiyatlar):
-    margins = [_margin("MADEN.ALTIN_RO", "Has Altın", "READONLY", 0, 0, readonly=True)]
+    margins = [_margin("MADEN.ALTIN_RO", "Has Altın (Ham)", "READONLY", 0, 0, readonly=True)]
     rows = compute_prices(sample_fiyatlar, margins, {})
     assert rows[0].alis == 6800.00
     assert rows[0].satis == 6828.94
@@ -84,7 +84,7 @@ def test_computed_kg_ons_altin(sample_fiyatlar):
 
 def test_missing_symbol_skipped(sample_fiyatlar):
     margins = [
-        _margin("MADEN.ALTIN", "Has Altın", "ALTIN", 0, 0),
+        _margin("SARRAFIYE.KULCEALTIN", "Gram Altın", "ALTIN", 0, 0),
         _margin("DOVIZ.NONEXISTENT", "Yok", "DOVIZ", 0, 0),
     ]
     rows = compute_prices(sample_fiyatlar, margins, {})
@@ -101,34 +101,34 @@ def test_volatility_only_applies_to_eligible_symbols(sample_fiyatlar):
     assert rows[0].alis == 3500.00
 
 
-def test_multiplier_row_uses_has_altin_display(sample_fiyatlar):
-    """Multiplier satır: Has Altın display × milyem ile hesaplanır."""
+def test_multiplier_row_uses_gram_altin_display(sample_fiyatlar):
+    """Multiplier satır: Gram Altın display × milyem ile hesaplanır."""
     margins = [
-        _margin("MADEN.ALTIN", "Has Altın", "ALTIN", -10, 40),
+        _margin("SARRAFIYE.KULCEALTIN", "Gram Altın", "ALTIN", -10, 40),
         _margin("SARRAFIYE.CEYREK_YENI", "Yeni Çeyrek", "ALTIN", 1.62, 1.654, multiplier=True),
     ]
     rows = compute_prices(sample_fiyatlar, margins, {})
-    has_altin = next(r for r in rows if r.symbol_key == "MADEN.ALTIN")
+    gram = next(r for r in rows if r.symbol_key == "SARRAFIYE.KULCEALTIN")
     ceyrek = next(r for r in rows if r.symbol_key == "SARRAFIYE.CEYREK_YENI")
-    assert has_altin.alis == 6800.00 - 10  # 6790
-    assert has_altin.satis == 6828.94 + 40  # 6868.94
-    assert abs(ceyrek.alis - 6790 * 1.62) < 0.01  # 10999.8
+    assert gram.alis == 6800.00 - 10
+    assert gram.satis == 6828.94 + 40
+    assert abs(ceyrek.alis - 6790 * 1.62) < 0.01
     assert abs(ceyrek.satis - 6868.94 * 1.654) < 0.01
 
 
-def test_multiplier_inherits_has_altin_volatility(volatile_fiyatlar):
-    """Has Altın volatility aktifse multiplier satırlar da volatility göstergesi taşır."""
+def test_multiplier_inherits_gram_altin_volatility(volatile_fiyatlar):
+    """Gram Altın volatility aktifse multiplier satırlar da volatility göstergesi taşır."""
     margins = [
-        _margin("MADEN.ALTIN", "Has Altın", "ALTIN", -10, 40),
+        _margin("SARRAFIYE.KULCEALTIN", "Gram Altın", "ALTIN", -10, 40),
         _margin("SARRAFIYE.CEYREK_YENI", "Yeni Çeyrek", "ALTIN", 1.62, 1.654, multiplier=True),
     ]
     volatility = {"ALTIN": _vol("ALTIN", 500, -200, 300)}
     rows = compute_prices(volatile_fiyatlar, margins, volatility)
-    has = next(r for r in rows if r.symbol_key == "MADEN.ALTIN")
+    gram = next(r for r in rows if r.symbol_key == "SARRAFIYE.KULCEALTIN")
     ceyrek = next(r for r in rows if r.symbol_key == "SARRAFIYE.CEYREK_YENI")
-    assert has.using_volatility is True
+    assert gram.using_volatility is True
     assert ceyrek.using_volatility is True
-    # Has Altın volatility değerleri: 6800-200=6600, 7400+300=7700
+    # Gram Altın volatility değerleri: 6800-200=6600, 7400+300=7700
     assert abs(ceyrek.alis - 6600 * 1.62) < 0.01
     assert abs(ceyrek.satis - 7700 * 1.654) < 0.01
 

@@ -18,7 +18,7 @@ from decimal import Decimal
 from app.services.symbol_map import lookup_raw
 
 VOLATILITY_ELIGIBLE_SYMBOLS = {
-    "MADEN.ALTIN",
+    "SARRAFIYE.KULCEALTIN",
     "DOVIZ.USDTRY",
     "DOVIZ.EURTRY",
     "DOVIZ.GBPTRY",
@@ -29,7 +29,10 @@ VOLATILITY_ELIGIBLE_SYMBOLS = {
     "DOVIZ.EURUSDS",
 }
 
-HAS_ALTIN_KEY = "MADEN.ALTIN"
+# Milyem (multiplier) hesabı için baz alınan "gram altın" sembolü.
+# Sarrafiye'deki Gram Altın satırı bu sembolü kaynak alır, diğer altın ürünleri
+# bu satırın display alış/satış değeriyle milyem çarpılarak hesaplanır.
+HAS_ALTIN_KEY = "SARRAFIYE.KULCEALTIN"
 
 
 @dataclass(frozen=True)
