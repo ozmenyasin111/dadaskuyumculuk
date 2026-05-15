@@ -1,10 +1,16 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Instagram } from "lucide-react";
+import { AlertCircle, Instagram } from "lucide-react";
 
 export function FooterSection() {
   return (
     <footer className="bg-black text-white mt-16">
+      <div className="bg-gold-500 text-black">
+        <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-center gap-3 text-sm sm:text-base font-bold">
+          <AlertCircle className="w-5 h-5 flex-shrink-0" />
+          <span>Fiyatlarımız bilgi amaçlıdır.</span>
+        </div>
+      </div>
       <div className="max-w-7xl mx-auto px-6 py-10 grid grid-cols-1 sm:grid-cols-3 gap-8">
         <div className="flex flex-col items-start gap-3">
           <div className="flex items-center gap-3">

@@ -8,7 +8,6 @@ import { FooterSection } from "@/components/FooterSection";
 import { HakkimizdaSection } from "@/components/HakkimizdaSection";
 import { ParitelerSection } from "@/components/ParitelerSection";
 import { PriceColumn } from "@/components/PriceColumn";
-import { PriceNotice } from "@/components/PriceNotice";
 import { TopBar } from "@/components/TopBar";
 import { usePrices } from "@/hooks/useSocket";
 import { formatTime } from "@/lib/format";
@@ -65,7 +64,6 @@ export default function HomePage() {
         </section>
       </main>
       <FooterSection />
-      <PriceNotice />
     </div>
   );
 }
