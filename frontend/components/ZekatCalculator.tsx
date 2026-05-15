@@ -12,10 +12,15 @@ const ZEKAT_ORANI = 0.025;
 export function ZekatCalculator() {
   const { fiyatlar } = usePrices();
 
-  const altinGramTL = useMemo(
-    () => fiyatlar.find((r) => r.symbol_key === "MADEN.ALTIN")?.raw_bid ?? 0,
-    [fiyatlar]
-  );
+  // Migration 0006 sonrası gram altın referansı SARRAFIYE.KULCEALTIN.
+  // raw_bid = Harem'in ham (offset uygulanmamış) gram altın alış fiyatı.
+  // Fallback: eski MADEN.ALTIN_RO (Has Altın ham) — eğer KULCEALTIN gelmezse.
+  const altinGramTL = useMemo(() => {
+    const kulce = fiyatlar.find((r) => r.symbol_key === "SARRAFIYE.KULCEALTIN")?.raw_bid;
+    if (kulce) return kulce;
+    const hasRo = fiyatlar.find((r) => r.symbol_key === "MADEN.ALTIN_RO")?.raw_bid;
+    return hasRo ?? 0;
+  }, [fiyatlar]);
   const gumusKgRaw = useMemo(
     () => fiyatlar.find((r) => r.symbol_key === "COMPUTED.KG_GUMUS_TL")?.raw_bid ?? 0,
     [fiyatlar]
