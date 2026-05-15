@@ -73,26 +73,26 @@ export default function MarjlarPage() {
             </p>
             <ul className="list-disc pl-5 space-y-1 text-xs">
               <li>
-                <b>Has Altın &amp; Gümüş Kg (TL bazlı):</b> Girdiğiniz miktar Harem alışından
+                <b>Gram Altın &amp; Gümüş Kg (TL bazlı):</b> Girdiğiniz miktar Harem alışından
                 <b className="text-fall"> çıkarılır</b>, satışına <b className="text-rise">eklenir</b>.
               </li>
               <li>
-                <b>Diğer altınlar (milyem):</b> <b>Bizim Has Altın fiyatımız × girdiğiniz milyem</b> ile hesaplanır.
-                Has Altın volatiliteden etkilenirse bu ürünler de <b>otomatik olarak</b> aynı korumadan faydalanır.
+                <b>Diğer altınlar (milyem):</b> <b>Bizim Gram Altın fiyatımız × girdiğiniz milyem</b> ile hesaplanır.
+                Gram Altın volatiliteden etkilenirse bu ürünler de <b>otomatik olarak</b> aynı korumadan faydalanır.
               </li>
               <li>
-                <b>Döviz (TL bazlı):</b> Has Altın gibi alış&apos;tan çıkarılır, satış&apos;a eklenir.
+                <b>Döviz (TL bazlı):</b> Gram Altın gibi alış&apos;tan çıkarılır, satış&apos;a eklenir.
               </li>
             </ul>
             <p className="text-xs text-gray-600 mt-2">
-              Örnek: Harem Has Altın 6.800/6.840 + sizin offset -10/+40 → bizim Has Altın 6.790/6.880.
+              Örnek: Harem Gram Altın 6.800/6.840 + sizin offset -15/+40 → bizim Gram Altın 6.785/6.880.
               Yeni Çeyrek milyemleri 1.62/1.6540 → ekrana çıkar: <b className="tabular-nums">11.000 / 11.380</b>.
             </p>
           </div>
         </div>
       </div>
 
-      <Group title="Has Altın & Gümüş Kg (TL bazlı kâr)">
+      <Group title="Gram Altın & Gümüş Kg (TL bazlı kâr)">
         <TableHeader mode="tl" />
         {tlAltin.map((row) => (
           <RowEditor

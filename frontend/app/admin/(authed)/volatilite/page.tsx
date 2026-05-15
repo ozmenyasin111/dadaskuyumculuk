@@ -63,10 +63,10 @@ export default function VolatilitePage() {
             </div>
             <p className="mb-2">
               Piyasa aniden hareketlenirse Harem Altın&apos;ın alış-satış makası
-              geniş açılır. Bu durumda <b>Kâr Marjları</b> ekranında Has Altın
+              geniş açılır. Bu durumda <b>Kâr Marjları</b> ekranında Gram Altın
               için girdiğiniz değerler <b>geçici olarak geçersiz olur</b> ve{" "}
               <b>bu sayfada girdiğiniz değerler aktif olur</b>. Diğer altın
-              ürünleri Has Altın fiyatımız × milyem ile hesaplandığı için
+              ürünleri Gram Altın fiyatımız × milyem ile hesaplandığı için
               <b> bütün altın fiyatlarınız otomatik olarak</b> bu güvenli
               değerlerle güncellenir; ayrıca tek tek düzeltmeniz gerekmez. Bu
               sistem işletmenizi anlık fiyat değişimlerinde zarar etmekten korur.
@@ -176,7 +176,7 @@ export default function VolatilitePage() {
 }
 
 function labelFor(cat: string): string {
-  if (cat === "ALTIN") return "Has Altın";
+  if (cat === "ALTIN") return "Gram Altın";
   if (cat === "DOVIZ") return "Döviz";
   return cat;
 }
