@@ -32,10 +32,10 @@ export function TopBar() {
 
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-30">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-1.5 sm:py-2 flex items-center justify-between gap-4">
         <Link
           href="/"
-          className="flex items-center gap-3 sm:gap-4 min-w-0"
+          className="flex items-center gap-2 sm:gap-3 min-w-0"
           aria-label="Dadaş Kuyumculuk anasayfa"
         >
           <Image
@@ -44,16 +44,16 @@ export function TopBar() {
             width={1037}
             height={1024}
             priority
-            className="h-14 sm:h-20 md:h-24 w-auto flex-shrink-0"
+            className="h-9 sm:h-11 md:h-12 w-auto flex-shrink-0"
           />
           <div className="text-center leading-none">
-            <div className="font-brand font-bold text-black text-2xl sm:text-4xl md:text-5xl tracking-[0.04em]">
+            <div className="font-brand font-bold text-black text-lg sm:text-2xl md:text-3xl tracking-[0.04em]">
               DADAŞ
             </div>
-            <div className="font-brand font-bold text-gold-700 text-[10px] sm:text-xs md:text-sm tracking-[0.24em] sm:tracking-[0.32em] mt-1 sm:mt-1.5">
+            <div className="font-brand font-bold text-gold-700 text-[9px] sm:text-[10px] md:text-xs tracking-[0.22em] sm:tracking-[0.28em] mt-0.5 sm:mt-1">
               KUYUMCULUK
             </div>
-            <div className="font-brand font-bold text-gold-600 text-[10px] sm:text-[11px] md:text-xs tracking-[0.24em] sm:tracking-[0.32em] mt-0.5 sm:mt-1">
+            <div className="font-brand font-bold text-gold-600 text-[9px] sm:text-[10px] md:text-[11px] tracking-[0.22em] sm:tracking-[0.28em] mt-0.5">
               1974
             </div>
           </div>
@@ -104,7 +104,7 @@ export function TopBar() {
           <button
             aria-label="Menüyü kapat"
             onClick={() => setMenuOpen(false)}
-            className="fixed inset-0 top-[72px] bg-black/40 z-20 sm:hidden"
+            className="fixed inset-0 top-[56px] bg-black/40 z-20 sm:hidden"
           />
           <nav className="absolute left-0 right-0 top-full bg-white border-b border-gray-200 shadow-lg z-30 sm:hidden">
             <div className="flex flex-col p-4 gap-2">

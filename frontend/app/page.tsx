@@ -31,8 +31,8 @@ export default function HomePage() {
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <TopBar />
-      <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 pt-2 sm:pt-3 pb-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
           <PriceColumn title="Sarrafiye & Gram Altın" rows={sol} />
           <div className="flex flex-col gap-6">
             <PriceColumn title="Döviz" rows={sag} />
