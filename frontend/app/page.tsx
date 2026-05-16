@@ -34,7 +34,7 @@ export default function HomePage() {
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 pt-2 sm:pt-3 pb-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
           <PriceColumn title="Sarrafiye & Gram Altın" rows={sol} />
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-3 sm:gap-4">
             <PriceColumn title="Döviz" rows={sag} />
             <PriceColumn title="Kuyumcu Paneli" rows={ro} />
           </div>
