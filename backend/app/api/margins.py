@@ -28,6 +28,10 @@ async def update_margin(
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "salt-okunur satır düzenlenemez")
     row.alis_offset = payload.alis_offset
     row.satis_offset = payload.satis_offset
+    if payload.classic_alis_offset is not None:
+        row.classic_alis_offset = payload.classic_alis_offset
+    if payload.classic_satis_offset is not None:
+        row.classic_satis_offset = payload.classic_satis_offset
     await db.commit()
     await db.refresh(row)
     await hydrate_settings_cache()  # worker bir sonraki tick'te yeni offset'leri görür

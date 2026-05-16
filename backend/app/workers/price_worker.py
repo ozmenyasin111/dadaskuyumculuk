@@ -41,7 +41,13 @@ async def _tick() -> None:
     guncellendi = payload.get("guncellendi", 0)
 
     s = cache.get_settings()
-    rows = compute_prices(fiyatlar, s.margins, s.volatility, baseline=cache.get_baseline_map())
+    rows = compute_prices(
+        fiyatlar,
+        s.margins,
+        s.volatility,
+        baseline=cache.get_baseline_map(),
+        pricing_mode=s.pricing_mode,
+    )
 
     # Parite baseline: aynı tabloda "PARITE.{sym}" prefix ile saklanır
     parite_baselines = {

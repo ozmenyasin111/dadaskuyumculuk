@@ -20,14 +20,22 @@ class MarginSetting(Base):
     # "ALTIN" (sol kolon) | "DOVIZ" (sağ kolon) | "READONLY" (kuyumcu bakar paneli)
     category: Mapped[str] = mapped_column(String(32), nullable=False)
 
+    # Milyem modu offset'leri.
+    # is_multiplier=true satırlarda bunlar milyem (çarpan) değerleri olarak yorumlanır;
+    # diğer satırlarda TL bazlı ekleme/çıkarma.
     alis_offset: Mapped[Decimal] = mapped_column(Numeric(12, 4), nullable=False, default=0)
     satis_offset: Mapped[Decimal] = mapped_column(Numeric(12, 4), nullable=False, default=0)
+
+    # "Fiyat Ekle/Çıkar" (classic) modunda multiplier satırlar için TL bazlı offset.
+    # Multiplier olmayan satırlarda kullanılmaz.
+    classic_alis_offset: Mapped[Decimal] = mapped_column(Numeric(12, 4), nullable=False, default=0)
+    classic_satis_offset: Mapped[Decimal] = mapped_column(Numeric(12, 4), nullable=False, default=0)
 
     sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     is_readonly: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
-    # True → alis_offset/satis_offset milyem (çarpan) olarak yorumlanır.
-    # Has Altın display × milyem ile fiyat hesaplanır. False → TL bazlı ekleme/çıkarma.
+    # True → satır milyem modunda Gram Altın display × milyem ile hesaplanır,
+    # classic modunda kendi raw bid/ask + classic_*_offset kullanır.
     is_multiplier: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     updated_at: Mapped[datetime] = mapped_column(

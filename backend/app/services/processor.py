@@ -49,6 +49,9 @@ class MarginRow:
     sort_order: int
     is_readonly: bool
     is_multiplier: bool = False
+    # Classic ("Fiyat Ekle/Çıkar") mod offset'leri — multiplier satırlarda TL bazlı.
+    classic_alis_offset: Decimal = Decimal("0")
+    classic_satis_offset: Decimal = Decimal("0")
 
 
 @dataclass(frozen=True)
@@ -116,6 +119,7 @@ def compute_prices(
     margins: list[MarginRow],
     volatility: dict[str, VolatilityRule],
     baseline: dict[str, float] | None = None,
+    pricing_mode: str = "milyem",
 ) -> list[PriceRow]:
     baseline = baseline or {}
     has_altin_row = next((m for m in margins if m.symbol_key == HAS_ALTIN_KEY), None)
@@ -124,9 +128,8 @@ def compute_prices(
     out: list[PriceRow] = []
     for m in margins:
         if m.symbol_key == HAS_ALTIN_KEY:
-            # Gram Altın satırı: _has_altin_display zaten fallback + volatility +
-            # offset uygulamış halde döner. Tekrar lookup_raw çağırırsak besleme
-            # 0 dönerken satır komple kaybolur.
+            # Gram Altın satırı her iki modda aynı: _has_altin_display zaten
+            # fallback + volatility + offset uygulamış halde döner.
             if has_altin is None:
                 continue
             alis = has_altin["alis"]
@@ -134,7 +137,7 @@ def compute_prices(
             raw_bid = has_altin["raw_bid"]
             raw_ask = has_altin["raw_ask"]
             using_volatility = has_altin["using_volatility"]
-        elif m.is_multiplier:
+        elif m.is_multiplier and pricing_mode == "milyem":
             if has_altin is None:
                 continue
             alis = has_altin["alis"] * float(m.alis_offset)
@@ -142,6 +145,17 @@ def compute_prices(
             raw_bid = has_altin["raw_bid"]
             raw_ask = has_altin["raw_ask"]
             using_volatility = has_altin["using_volatility"]
+        elif m.is_multiplier and pricing_mode == "classic":
+            # Classic mod: multiplier satırlar kendi raw'larına bakıp TL offset uygular.
+            # SARRAFIYE.* besleme 0 dönüyorsa lookup_raw None döner → satır gizlenir.
+            raw = lookup_raw(fiyatlar, m.symbol_key)
+            if raw is None:
+                continue
+            raw_bid = raw["bid"]
+            raw_ask = raw["ask"]
+            alis = raw_bid + float(m.classic_alis_offset)
+            satis = raw_ask + float(m.classic_satis_offset)
+            using_volatility = False
         else:
             raw = lookup_raw(fiyatlar, m.symbol_key)
             if raw is None:

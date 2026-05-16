@@ -31,6 +31,7 @@ class PriceState:
 class SettingsState:
     margins: list[MarginRow] = field(default_factory=list)
     volatility: dict[str, VolatilityRule] = field(default_factory=dict)
+    pricing_mode: str = "milyem"
     version: int = 0
 
 
@@ -64,12 +65,16 @@ class Cache:
             )
 
     async def set_settings(
-        self, margins: list[MarginRow], volatility: dict[str, VolatilityRule]
+        self,
+        margins: list[MarginRow],
+        volatility: dict[str, VolatilityRule],
+        pricing_mode: str = "milyem",
     ) -> None:
         async with self._lock:
             self.settings = SettingsState(
                 margins=margins,
                 volatility=volatility,
+                pricing_mode=pricing_mode,
                 version=self.settings.version + 1,
             )
 

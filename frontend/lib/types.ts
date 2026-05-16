@@ -35,10 +35,14 @@ export type Margin = {
   category: string;
   alis_offset: string;
   satis_offset: string;
+  classic_alis_offset: string;
+  classic_satis_offset: string;
   sort_order: number;
   is_readonly: boolean;
   is_multiplier: boolean;
 };
+
+export type PricingMode = "milyem" | "classic";
 
 export type Volatility = {
   id: number;

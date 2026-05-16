@@ -41,6 +41,7 @@ async def healthz() -> dict[str, str]:
 from app.api.auth import router as auth_router  # noqa: E402
 from app.api.margins import router as margins_router  # noqa: E402
 from app.api.prices import router as prices_router  # noqa: E402
+from app.api.pricing_mode import router as pricing_mode_router  # noqa: E402
 from app.api.users import router as users_router  # noqa: E402
 from app.api.volatility import router as volatility_router  # noqa: E402
 
@@ -48,6 +49,7 @@ fastapi_app.include_router(auth_router, prefix="/api/auth", tags=["auth"])
 fastapi_app.include_router(prices_router, prefix="/api/prices", tags=["prices"])
 fastapi_app.include_router(margins_router, prefix="/api/admin/margins", tags=["admin"])
 fastapi_app.include_router(volatility_router, prefix="/api/admin/volatility", tags=["admin"])
+fastapi_app.include_router(pricing_mode_router, prefix="/api/admin/pricing-mode", tags=["admin"])
 fastapi_app.include_router(users_router, prefix="/api/admin/users", tags=["admin"])
 
 # Socket.io mount — combined ASGI app

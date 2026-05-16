@@ -6,7 +6,13 @@ from sqlalchemy import select
 
 from app.config import settings
 from app.db.session import SessionLocal
-from app.models import DailyBaseline, MarginSetting, User, VolatilityOverride
+from app.models import (
+    DailyBaseline,
+    MarginSetting,
+    PricingConfig,
+    User,
+    VolatilityOverride,
+)
 from app.services.auth import hash_password
 from app.services.cache import BaselineEntry, cache
 from app.services.processor import MarginRow, VolatilityRule
@@ -43,6 +49,8 @@ async def hydrate_settings_cache() -> None:
                 sort_order=m.sort_order,
                 is_readonly=m.is_readonly,
                 is_multiplier=m.is_multiplier,
+                classic_alis_offset=m.classic_alis_offset,
+                classic_satis_offset=m.classic_satis_offset,
             )
             for m in margins_res
         ]
@@ -57,8 +65,13 @@ async def hydrate_settings_cache() -> None:
             )
             for v in vol_res
         }
-        await cache.set_settings(margins, volatility)
-        log.info("ayarlar belleğe alındı: %d sembol, %d volatility", len(margins), len(volatility))
+        cfg = await db.get(PricingConfig, 1)
+        pricing_mode = cfg.mode if cfg else "milyem"
+        await cache.set_settings(margins, volatility, pricing_mode)
+        log.info(
+            "ayarlar belleğe alındı: %d sembol, %d volatility, mode=%s",
+            len(margins), len(volatility), pricing_mode,
+        )
 
 
 async def hydrate_baselines_cache() -> None:

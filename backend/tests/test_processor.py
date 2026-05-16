@@ -16,6 +16,8 @@ def _margin(
     satis: float,
     readonly: bool = False,
     multiplier: bool = False,
+    classic_alis: float = 0,
+    classic_satis: float = 0,
 ) -> MarginRow:
     return MarginRow(
         symbol_key=symbol_key,
@@ -26,6 +28,8 @@ def _margin(
         sort_order=0,
         is_readonly=readonly,
         is_multiplier=multiplier,
+        classic_alis_offset=Decimal(str(classic_alis)),
+        classic_satis_offset=Decimal(str(classic_satis)),
     )
 
 
@@ -152,6 +156,50 @@ def test_kulcealtin_falls_back_to_maden_altin_when_zero():
     assert abs(gram.satis - (6690.98 + 40)) < 0.01
     ceyrek = by_key["SARRAFIYE.CEYREK_YENI"]
     assert abs(ceyrek.alis - (6637.18 - 15) * 1.62) < 0.01
+
+
+def test_classic_mode_uses_own_raw_and_tl_offset(sample_fiyatlar):
+    """Classic mod: multiplier satır kendi raw'ına bakıp TL offset ekler."""
+    margins = [
+        _margin("SARRAFIYE.KULCEALTIN", "Gram Altın", "ALTIN", -10, 40),
+        _margin(
+            "SARRAFIYE.AYAR22",
+            "Bilezik (22 Ayar)",
+            "ALTIN",
+            0.91,  # milyem (kullanılmaz classic mode'da)
+            0.955,
+            multiplier=True,
+            classic_alis=-15,
+            classic_satis=100,
+        ),
+    ]
+    rows = compute_prices(sample_fiyatlar, margins, {}, pricing_mode="classic")
+    bilezik = next(r for r in rows if r.symbol_key == "SARRAFIYE.AYAR22")
+    # sample_fiyatlar SARRAFIYE.AYAR22 → bid=6184.27, ask=6486.01
+    assert abs(bilezik.alis - (6184.27 - 15)) < 0.01
+    assert abs(bilezik.satis - (6486.01 + 100)) < 0.01
+
+
+def test_milyem_mode_still_uses_has_altin(sample_fiyatlar):
+    """Milyem mod default davranışı korunmalı — multiplier × has_altin display."""
+    margins = [
+        _margin("SARRAFIYE.KULCEALTIN", "Gram Altın", "ALTIN", -10, 40),
+        _margin(
+            "SARRAFIYE.AYAR22",
+            "Bilezik",
+            "ALTIN",
+            0.91,
+            0.955,
+            multiplier=True,
+            classic_alis=-15,
+            classic_satis=100,
+        ),
+    ]
+    rows = compute_prices(sample_fiyatlar, margins, {}, pricing_mode="milyem")
+    bilezik = next(r for r in rows if r.symbol_key == "SARRAFIYE.AYAR22")
+    # has_altin alis = 6800 - 10 = 6790; satis = 6828.94 + 40 = 6868.94
+    assert abs(bilezik.alis - 6790 * 0.91) < 0.01
+    assert abs(bilezik.satis - 6868.94 * 0.955) < 0.01
 
 
 def test_extract_pariteler(sample_fiyatlar):
