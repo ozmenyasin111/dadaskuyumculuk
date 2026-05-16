@@ -69,6 +69,13 @@ def _compute(fiyatlar: dict, name: str) -> dict | None:
         if not gram:
             return None
         return {"bid": gram["bid"] * 1000, "ask": gram["ask"] * 1000}
+    if name == "KG_GUMUS_USD":
+        # XAGUSD (USD/troy oz) × 32.1507 = USD/kg. MADEN.GUMUSD ham değer
+        # USD/gr olduğu için doğrudan kullanılırsa 1000 kat eksik gözüküyordu.
+        xag = lookup_raw(fiyatlar, "MADEN.XAGUSD")
+        if not xag:
+            return None
+        return {"bid": xag["bid"] * TROY_OUNCES_PER_KG, "ask": xag["ask"] * TROY_OUNCES_PER_KG}
     if name == "ATA_CUMHURIYET":
         # Karma sembol: alış API'deki ATA_ESKI bid'inden, satış ATA_YENI ask'ından.
         # Kuyumcunun ürün karışımına göre alış tarafında eski ata kadar agresif fiyat
