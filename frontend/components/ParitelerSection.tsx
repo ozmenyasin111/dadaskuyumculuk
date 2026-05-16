@@ -1,6 +1,7 @@
 "use client";
 
 import clsx from "clsx";
+import { ArrowDown, ArrowUp } from "lucide-react";
 
 import { autoFractionDigits, formatTR } from "@/lib/format";
 import type { Parite } from "@/lib/types";
@@ -32,7 +33,7 @@ function ParityCard({ parite: p }: { parite: Parite }) {
     <div
       className={clsx(
         "grid items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-2.5",
-        "grid-cols-[minmax(0,1fr)_5.5rem_5.5rem] sm:grid-cols-[minmax(0,1fr)_7rem_7rem]",
+        "grid-cols-[minmax(0,1fr)_5.5rem_5.5rem_1.25rem] sm:grid-cols-[minmax(0,1fr)_7rem_7rem_1.5rem]",
         "bg-amber-50/60 border border-amber-100 rounded-lg shadow-[0_1px_2px_rgba(184,155,94,0.08)]",
         "transition-all duration-300 ease-soft",
         "hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(184,155,94,0.25)] hover:border-gold-300 hover:bg-amber-50",
@@ -47,6 +48,15 @@ function ParityCard({ parite: p }: { parite: Parite }) {
       <div className="text-right tabular-nums font-bold whitespace-nowrap text-base sm:text-2xl text-rise">
         {formatTR(p.ask, autoFractionDigits(p.ask))}
       </div>
+      {p.trend === "up" && (
+        <ArrowUp className="w-4 h-4 sm:w-5 sm:h-5 text-rise justify-self-center" strokeWidth={3} />
+      )}
+      {p.trend === "down" && (
+        <ArrowDown className="w-4 h-4 sm:w-5 sm:h-5 text-fall justify-self-center" strokeWidth={3} />
+      )}
+      {p.trend === "flat" && (
+        <span className="text-gray-300 text-base sm:text-xl font-bold justify-self-center">—</span>
+      )}
     </div>
   );
 }
