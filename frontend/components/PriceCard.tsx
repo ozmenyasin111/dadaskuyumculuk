@@ -26,7 +26,7 @@ export function PriceCard({ row }: { row: PriceRow }) {
       </div>
       <div
         className={clsx(
-          "text-right tabular-nums font-bold whitespace-nowrap text-base sm:text-2xl",
+          "text-right tabular-nums font-bold whitespace-nowrap text-base sm:text-2xl pr-3 sm:pr-6",
           row.trend === "up" && "text-rise",
           row.trend === "down" && "text-fall",
           row.trend === "flat" && "text-black",

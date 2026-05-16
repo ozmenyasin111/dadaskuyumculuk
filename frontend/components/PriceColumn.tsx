@@ -11,7 +11,7 @@ export function PriceColumn({ title, rows }: { title: string; rows: PriceRow[] }
       </div>
       <div className="grid gap-2 sm:gap-3 px-3 sm:px-4 mb-2 text-[10px] uppercase font-bold tracking-wider text-gray-500 grid-cols-[minmax(0,1fr)_5.5rem_5.5rem] sm:grid-cols-[minmax(0,1fr)_8.5rem_8.5rem]">
         <div>Birim</div>
-        <div className="text-right">Alış</div>
+        <div className="text-right pr-3 sm:pr-6">Alış</div>
         <div className="text-right">Satış</div>
       </div>
       <div className="flex flex-col gap-2">
