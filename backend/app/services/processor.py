@@ -223,6 +223,10 @@ def extract_pariteler(
         if isinstance(raw, dict) and raw.get("bid") is not None and raw.get("ask") is not None:
             bid = float(raw["bid"])
             ask = float(raw["ask"])
+            # API bir pariteyi durdurduğunda 0/0 dönüyor (örn USDRUB).
+            # Sıfır değerleri "veri yok" olarak gizle.
+            if bid <= 0 or ask <= 0:
+                continue
             bl = baseline.get(sym)
             if bl is not None and bl != 0:
                 pct = (bid - bl) / bl * 100.0
