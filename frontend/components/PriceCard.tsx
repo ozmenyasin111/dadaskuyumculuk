@@ -9,8 +9,8 @@ export function PriceCard({ row }: { row: PriceRow }) {
   return (
     <div
       className={clsx(
-        "grid items-center gap-2 sm:gap-3 px-3 sm:px-5 py-3 sm:py-4",
-        "grid-cols-[minmax(0,1fr)_6rem_6rem] sm:grid-cols-[minmax(0,1fr)_9rem_9rem]",
+        "grid items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5",
+        "grid-cols-[minmax(0,1fr)_5rem_5rem] sm:grid-cols-[minmax(0,1fr)_7rem_7rem]",
         "bg-amber-50/60 border border-amber-100 rounded-lg shadow-[0_1px_2px_rgba(184,155,94,0.08)]",
         "transition-all duration-300 ease-soft",
         "hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(184,155,94,0.25)] hover:border-gold-300 hover:bg-amber-50",
