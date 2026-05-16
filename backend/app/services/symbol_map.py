@@ -69,4 +69,13 @@ def _compute(fiyatlar: dict, name: str) -> dict | None:
         if not gram:
             return None
         return {"bid": gram["bid"] * 1000, "ask": gram["ask"] * 1000}
+    if name == "ATA_CUMHURIYET":
+        # Karma sembol: alış API'deki ATA_ESKI bid'inden, satış ATA_YENI ask'ından.
+        # Kuyumcunun ürün karışımına göre alış tarafında eski ata kadar agresif fiyat
+        # vermek, satış tarafında yeni ata referansını tutmak için.
+        yeni = lookup_raw(fiyatlar, "SARRAFIYE.ATA_YENI")
+        eski = lookup_raw(fiyatlar, "SARRAFIYE.ATA_ESKI")
+        if not yeni or not eski:
+            return None
+        return {"bid": eski["bid"], "ask": yeni["ask"]}
     return None
