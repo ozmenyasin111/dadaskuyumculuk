@@ -9,9 +9,9 @@ export function PriceColumn({ title, rows }: { title: string; rows: PriceRow[] }
           {title}
         </h2>
       </div>
-      <div className="grid gap-2 sm:gap-3 px-3 sm:px-4 mb-2 text-[10px] uppercase font-bold tracking-wider text-gray-500 grid-cols-[minmax(0,1fr)_5.5rem_5.5rem_1.25rem] sm:grid-cols-[minmax(0,1fr)_11rem_11rem_1.75rem]">
+      <div className="grid gap-2 sm:gap-3 px-3 sm:px-4 mb-2 text-[10px] uppercase font-bold tracking-wider text-gray-500 grid-cols-[minmax(0,1fr)_5.5rem_5.5rem_1.25rem] sm:grid-cols-[minmax(0,1fr)_9.5rem_9.5rem_1.25rem]">
         <div>Birim</div>
-        <div className="text-right pr-3 sm:pr-10">Alış</div>
+        <div className="text-right pr-3 sm:pr-3">Alış</div>
         <div className="text-right">Satış</div>
         <div />
       </div>

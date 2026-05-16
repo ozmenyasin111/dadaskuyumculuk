@@ -11,7 +11,7 @@ export function PriceCard({ row }: { row: PriceRow }) {
     <div
       className={clsx(
         "grid items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-2.5",
-        "grid-cols-[minmax(0,1fr)_5.5rem_5.5rem_1.25rem] sm:grid-cols-[minmax(0,1fr)_11rem_11rem_1.75rem]",
+        "grid-cols-[minmax(0,1fr)_5.5rem_5.5rem_1.25rem] sm:grid-cols-[minmax(0,1fr)_9.5rem_9.5rem_1.25rem]",
         "bg-amber-50/60 border border-amber-100 rounded-lg shadow-[0_1px_2px_rgba(184,155,94,0.08)]",
         "transition-all duration-300 ease-soft",
         "hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(184,155,94,0.25)] hover:border-gold-300 hover:bg-amber-50",
@@ -25,7 +25,7 @@ export function PriceCard({ row }: { row: PriceRow }) {
       >
         {row.display_name}
       </div>
-      <div className="text-right tabular-nums font-bold whitespace-nowrap text-base sm:text-2xl pr-3 sm:pr-10 text-blue-700">
+      <div className="text-right tabular-nums font-bold whitespace-nowrap text-base sm:text-2xl pr-3 sm:pr-3 text-blue-700">
         {formatTR(row.alis, autoFractionDigits(row.alis))}
       </div>
       <div className="text-right tabular-nums font-bold whitespace-nowrap text-base sm:text-2xl text-rise">
