@@ -28,12 +28,6 @@ export function ParitelerSection({ pariteler }: { pariteler: Parite[] }) {
 }
 
 function ParityCard({ parite: p }: { parite: Parite }) {
-  const valueClass = clsx(
-    "text-right tabular-nums font-bold whitespace-nowrap text-base sm:text-2xl",
-    p.trend === "up" && "text-rise",
-    p.trend === "down" && "text-fall",
-    p.trend === "flat" && "text-black",
-  );
   return (
     <div
       className={clsx(
@@ -47,8 +41,12 @@ function ParityCard({ parite: p }: { parite: Parite }) {
       <div className="font-bold text-black uppercase truncate text-base sm:text-2xl" lang="tr">
         {p.symbol}
       </div>
-      <div className={valueClass}>{formatTR(p.bid, autoFractionDigits(p.bid))}</div>
-      <div className={valueClass}>{formatTR(p.ask, autoFractionDigits(p.ask))}</div>
+      <div className="text-right tabular-nums font-bold whitespace-nowrap text-base sm:text-2xl pr-3 sm:pr-6 text-blue-700">
+        {formatTR(p.bid, autoFractionDigits(p.bid))}
+      </div>
+      <div className="text-right tabular-nums font-bold whitespace-nowrap text-base sm:text-2xl text-rise">
+        {formatTR(p.ask, autoFractionDigits(p.ask))}
+      </div>
     </div>
   );
 }

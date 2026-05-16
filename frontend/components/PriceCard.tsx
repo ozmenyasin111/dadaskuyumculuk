@@ -24,24 +24,10 @@ export function PriceCard({ row }: { row: PriceRow }) {
       >
         {row.display_name}
       </div>
-      <div
-        className={clsx(
-          "text-right tabular-nums font-bold whitespace-nowrap text-base sm:text-2xl pr-3 sm:pr-6",
-          row.trend === "up" && "text-rise",
-          row.trend === "down" && "text-fall",
-          row.trend === "flat" && "text-black",
-        )}
-      >
+      <div className="text-right tabular-nums font-bold whitespace-nowrap text-base sm:text-2xl pr-3 sm:pr-6 text-blue-700">
         {formatTR(row.alis, autoFractionDigits(row.alis))}
       </div>
-      <div
-        className={clsx(
-          "text-right tabular-nums font-bold whitespace-nowrap text-base sm:text-2xl",
-          row.trend === "up" && "text-rise",
-          row.trend === "down" && "text-fall",
-          row.trend === "flat" && "text-black",
-        )}
-      >
+      <div className="text-right tabular-nums font-bold whitespace-nowrap text-base sm:text-2xl text-rise">
         {formatTR(row.satis, autoFractionDigits(row.satis))}
       </div>
     </div>
