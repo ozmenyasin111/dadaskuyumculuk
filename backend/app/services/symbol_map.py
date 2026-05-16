@@ -45,7 +45,13 @@ def lookup_raw(fiyatlar: dict, symbol_key: str) -> dict | None:
     ask = raw.get("ask")
     if bid is None or ask is None:
         return None
-    return {"bid": float(bid), "ask": float(ask)}
+    bid_f = float(bid)
+    ask_f = float(ask)
+    # API bir kategoriyi durdurduğunda 0 dönüyor (stale veri). 0'ı geçersiz say,
+    # böylece processor fallback'i devreye girer ve canlı altın 0 TL gösterilmez.
+    if bid_f <= 0 or ask_f <= 0:
+        return None
+    return {"bid": bid_f, "ask": ask_f}
 
 
 def _compute(fiyatlar: dict, name: str) -> dict | None:

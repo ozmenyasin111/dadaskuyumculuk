@@ -133,6 +133,27 @@ def test_multiplier_inherits_gram_altin_volatility(volatile_fiyatlar):
     assert abs(ceyrek.satis - 7700 * 1.654) < 0.01
 
 
+def test_kulcealtin_falls_back_to_maden_altin_when_zero():
+    """API SARRAFIYE beslemesini durdurduğunda (bid/ask=0) MADEN.ALTIN'a düşmeli.
+    Gram Altın satırı kaybolmamalı, multiplier zinciri ayakta kalmalı."""
+    fiyatlar = {
+        "MADEN": {"ALTIN": {"bid": 6637.18, "ask": 6690.98}},
+        "SARRAFIYE": {"KULCEALTIN": {"bid": 0, "ask": 0}},
+    }
+    margins = [
+        _margin("SARRAFIYE.KULCEALTIN", "Gram Altın", "ALTIN", -15, 40),
+        _margin("SARRAFIYE.CEYREK_YENI", "Yeni Çeyrek", "ALTIN", 1.62, 1.654, multiplier=True),
+    ]
+    rows = compute_prices(fiyatlar, margins, {})
+    by_key = {r.symbol_key: r for r in rows}
+    assert "SARRAFIYE.KULCEALTIN" in by_key, "Gram Altın satırı fallback ile görünmeli"
+    gram = by_key["SARRAFIYE.KULCEALTIN"]
+    assert abs(gram.alis - (6637.18 - 15)) < 0.01
+    assert abs(gram.satis - (6690.98 + 40)) < 0.01
+    ceyrek = by_key["SARRAFIYE.CEYREK_YENI"]
+    assert abs(ceyrek.alis - (6637.18 - 15) * 1.62) < 0.01
+
+
 def test_extract_pariteler(sample_fiyatlar):
     pariteler = extract_pariteler(sample_fiyatlar)
     assert len(pariteler) == 1

@@ -33,6 +33,10 @@ VOLATILITY_ELIGIBLE_SYMBOLS = {
 # Sarrafiye'deki Gram Altın satırı bu sembolü kaynak alır, diğer altın ürünleri
 # bu satırın display alış/satış değeriyle milyem çarpılarak hesaplanır.
 HAS_ALTIN_KEY = "SARRAFIYE.KULCEALTIN"
+# API'de SARRAFIYE besleme zaman zaman duruyor (bid/ask=0). Bu olduğunda
+# MADEN.ALTIN canlı kaldığı için fallback olarak onu kullanıp tüm milyem
+# zincirini ayakta tutuyoruz.
+HAS_ALTIN_FALLBACK_KEY = "MADEN.ALTIN"
 
 
 @dataclass(frozen=True)
@@ -82,6 +86,8 @@ def _has_altin_display(
         return None
     raw = lookup_raw(fiyatlar, HAS_ALTIN_KEY)
     if raw is None:
+        raw = lookup_raw(fiyatlar, HAS_ALTIN_FALLBACK_KEY)
+    if raw is None:
         return None
     bid = raw["bid"]
     ask = raw["ask"]
@@ -117,7 +123,18 @@ def compute_prices(
 
     out: list[PriceRow] = []
     for m in margins:
-        if m.is_multiplier:
+        if m.symbol_key == HAS_ALTIN_KEY:
+            # Gram Altın satırı: _has_altin_display zaten fallback + volatility +
+            # offset uygulamış halde döner. Tekrar lookup_raw çağırırsak besleme
+            # 0 dönerken satır komple kaybolur.
+            if has_altin is None:
+                continue
+            alis = has_altin["alis"]
+            satis = has_altin["satis"]
+            raw_bid = has_altin["raw_bid"]
+            raw_ask = has_altin["raw_ask"]
+            using_volatility = has_altin["using_volatility"]
+        elif m.is_multiplier:
             if has_altin is None:
                 continue
             alis = has_altin["alis"] * float(m.alis_offset)
