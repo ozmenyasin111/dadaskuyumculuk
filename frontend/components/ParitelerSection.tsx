@@ -28,6 +28,10 @@ export function ParitelerSection({ pariteler }: { pariteler: Parite[] }) {
   );
 }
 
+function parityDigits(n: number): number {
+  return Math.abs(n) >= 100 ? 2 : 4;
+}
+
 function ParityCard({ parite: p }: { parite: Parite }) {
   return (
     <div
@@ -43,10 +47,10 @@ function ParityCard({ parite: p }: { parite: Parite }) {
         {p.symbol}
       </div>
       <div className="text-right tabular-nums font-bold whitespace-nowrap text-base sm:text-2xl pr-3 sm:pr-3 text-blue-700">
-        {formatTR(p.bid, 4)}
+        {formatTR(p.bid, parityDigits(p.bid))}
       </div>
       <div className="text-right tabular-nums font-bold whitespace-nowrap text-base sm:text-2xl text-rise">
-        {formatTR(p.ask, 4)}
+        {formatTR(p.ask, parityDigits(p.ask))}
       </div>
       {p.trend === "up" && (
         <ArrowUp className="w-4 h-4 sm:w-5 sm:h-5 text-rise justify-self-center" strokeWidth={3} />
