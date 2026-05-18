@@ -5,7 +5,7 @@ export const formatTR = (n: number, fractionDigits = 2): string =>
   }).format(n);
 
 export const autoFractionDigits = (n: number): number =>
-  Math.abs(n) < 1 ? 4 : 2;
+  Math.abs(n) < 100 ? 4 : 2;
 
 export const formatPrice = (n: number): string =>
   formatTR(n, autoFractionDigits(n));
