@@ -69,13 +69,25 @@ def _compute(fiyatlar: dict, name: str) -> dict | None:
         if not gram:
             return None
         return {"bid": gram["bid"] * 1000, "ask": gram["ask"] * 1000}
-    if name == "KG_GUMUS_USD":
-        # XAGUSD (USD/troy oz) × 32.1507 = USD/kg. MADEN.GUMUSD ham değer
-        # USD/gr olduğu için doğrudan kullanılırsa 1000 kat eksik gözüküyordu.
-        xag = lookup_raw(fiyatlar, "MADEN.XAGUSD")
-        if not xag:
+    if name == "KG_ALTIN_USD":
+        # API sağlayıcısının teyit ettiği yöntem: Harem haremaltin.com'da
+        # "Kg Altın USD" değerini MADEN.PARUSD üzerinden çekiyor.
+        # PARUSD = "Türk sarrafiye piyasasında 1 gram has altının USD karşılığı".
+        # × 1000 ile USD/kg olur. SARRAFIYE.USDKG ile aynı değer aralığı, ama
+        # PARUSD canlı tıklar, USDKG ise 13 günlük donuk feed.
+        par = lookup_raw(fiyatlar, "MADEN.PARUSD")
+        if not par:
             return None
-        return {"bid": xag["bid"] * TROY_OUNCES_PER_KG, "ask": xag["ask"] * TROY_OUNCES_PER_KG}
+        return {"bid": par["bid"] * 1000, "ask": par["ask"] * 1000}
+    if name == "KG_GUMUS_USD":
+        # Aynı pattern (gümüş için): MADEN.GUMUSD ham değeri USD/gr (Türk sarrafiye
+        # piyasası gümüş). × 1000 ile USD/kg. Harem'in canlı değerleriyle %0.1
+        # uyumlu olduğu kullanıcı ölçümleriyle doğrulandı (19:08 TR'de bizim hesap
+        # 2336/2498, Harem 2339/2501 — fark <3 USD doğal piyasa hareketi).
+        gu = lookup_raw(fiyatlar, "MADEN.GUMUSD")
+        if not gu:
+            return None
+        return {"bid": gu["bid"] * 1000, "ask": gu["ask"] * 1000}
     if name == "ATA_CUMHURIYET":
         # Karma sembol: alış API'deki ATA_ESKI bid'inden, satış ATA_YENI ask'ından.
         # Kuyumcunun ürün karışımına göre alış tarafında eski ata kadar agresif fiyat
