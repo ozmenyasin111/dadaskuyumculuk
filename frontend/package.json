@@ -8,8 +8,8 @@
     "start": "next start -p 3000",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
-    "build:mobile": "MOBILE_BUILD=1 next build",
-    "sync:mobile": "MOBILE_BUILD=1 next build && cap sync",
+    "build:mobile": "MOBILE_BUILD=1 NEXT_PUBLIC_API_URL=https://api.dadaskuyumculuk.com NEXT_PUBLIC_SOCKET_URL=https://api.dadaskuyumculuk.com next build",
+    "sync:mobile": "npm run build:mobile && cap sync",
     "open:ios": "cap open ios",
     "open:android": "cap open android"
   },

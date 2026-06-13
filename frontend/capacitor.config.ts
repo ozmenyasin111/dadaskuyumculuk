@@ -11,6 +11,11 @@ const config: CapacitorConfig = {
     androidScheme: 'https',
   },
   plugins: {
+    // Native fetch/XHR'ı OS katmanına taşır → backend CORS'unu baypas eder.
+    // (Backend cors_origins'e capacitor origin'i eklenemiyor; dokunmuyoruz.)
+    CapacitorHttp: {
+      enabled: true,
+    },
     SplashScreen: {
       launchShowDuration: 1200,
       backgroundColor: '#B89B5E',
