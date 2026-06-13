@@ -23,8 +23,10 @@ const config: CapacitorConfig = {
       androidScaleType: 'CENTER_CROP',
     },
     StatusBar: {
+      // Beyaz ikonlar + webview status bar'ın altına uzanır (edge-to-edge).
+      // Renk, gold header'ın kendisinden gelir (targetSdk 36'da backgroundColor no-op).
       style: 'LIGHT',
-      backgroundColor: '#B89B5E',
+      overlaysWebView: true,
     },
   },
 };

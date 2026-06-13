@@ -47,7 +47,9 @@ export function MobileApp() {
       const { SplashScreen } = await import("@capacitor/splash-screen");
       const { App } = await import("@capacitor/app");
 
+      // Beyaz ikonlar + webview status bar altına uzanır → gold header oraya basar
       StatusBar.setStyle({ style: Style.Light }).catch(() => {});
+      StatusBar.setOverlaysWebView({ overlay: true }).catch(() => {});
       SplashScreen.hide().catch(() => {});
 
       // Android donanım geri tuşu: kök sekmedeyse uygulamadan çık, değilse
@@ -68,10 +70,11 @@ export function MobileApp() {
 
   return (
     <div className="flex flex-col h-[100dvh] bg-gray-50">
-      {/* Slim marka başlığı — hamburger/menü YOK, sadece logo + canlı durum */}
+      {/* Marka başlığı — gold, status bar'ın altına uzanır (Harem tarzı, beyaz ikon).
+          Hamburger/menü YOK. */}
       <header
-        className="flex-shrink-0 bg-white border-b border-gray-200 flex items-center justify-between px-4 py-2"
-        style={{ paddingTop: "calc(env(safe-area-inset-top) + 0.5rem)" }}
+        className="flex-shrink-0 bg-gradient-to-b from-gold-600 to-gold-500 flex items-center justify-between px-4 py-2.5"
+        style={{ paddingTop: "calc(env(safe-area-inset-top) + 0.6rem)" }}
       >
         <div className="flex items-center gap-2 min-w-0">
           <Image
@@ -81,19 +84,20 @@ export function MobileApp() {
             height={1024}
             priority
             className="h-8 w-auto flex-shrink-0"
+            style={{ filter: "brightness(0) invert(1)" }}
           />
           <div className="leading-none">
-            <div className="font-brand font-bold text-black text-lg tracking-[0.04em]">
+            <div className="font-brand font-bold text-white text-lg tracking-[0.04em]">
               DADAŞ
             </div>
-            <div className="font-brand font-bold text-gold-700 text-[8px] tracking-[0.24em] mt-0.5">
+            <div className="font-brand font-bold text-gold-100 text-[8px] tracking-[0.24em] mt-0.5">
               KUYUMCULUK
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-1.5 text-[11px] text-gray-500">
+        <div className="flex items-center gap-1.5 text-[11px] text-white/90">
           <span
-            className={healthy ? "text-rise" : "text-fall"}
+            className={healthy ? "text-green-300" : "text-red-300"}
             title={healthy ? "Canlı veri akıyor" : "Veri akışı kesik"}
           >
             ●
