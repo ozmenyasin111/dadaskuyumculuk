@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { io, Socket } from "socket.io-client";
 
 import type { PricesPayload } from "@/lib/types";
@@ -12,8 +12,26 @@ const initial: PricesPayload = {
   healthy: false,
 };
 
-export function usePrices(): PricesPayload {
+export type UsePricesResult = PricesPayload & {
+  /** REST snapshot'ı yeniden çeker (mobil pull-to-refresh için). */
+  refresh: () => Promise<void>;
+};
+
+export function usePrices(): UsePricesResult {
   const [state, setState] = useState<PricesPayload>(initial);
+
+  // Pull-to-refresh: socket zaten canlı güncelliyor ama kullanıcı manuel
+  // çekince anında REST snapshot'ı tazeleriz.
+  const refresh = useCallback(async () => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "";
+    try {
+      const r = await fetch(`${apiUrl}/api/prices`, { cache: "no-store" });
+      const d: PricesPayload = await r.json();
+      setState(d);
+    } catch {
+      // sessizce yut — socket bir sonraki tick'te güncelleyecek
+    }
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -42,5 +60,5 @@ export function usePrices(): PricesPayload {
     };
   }, []);
 
-  return state;
+  return { ...state, refresh };
 }

@@ -19,7 +19,7 @@ import { SarrafiyeTab } from "./SarrafiyeTab";
 const SARRAFIYE_EXCLUDE = new Set<string>(["MADEN.ALTIN"]);
 
 export function MobileApp() {
-  const { fiyatlar, pariteler, guncellendi, healthy } = usePrices();
+  const { fiyatlar, pariteler, guncellendi, healthy, refresh } = usePrices();
   const [tab, setTab] = useState<MobileTab>("sarrafiye");
 
   const { sarrafiye, doviz } = useMemo(() => {
@@ -103,11 +103,20 @@ export function MobileApp() {
         </div>
       </header>
 
-      {/* İçerik — kaydırılabilir alan */}
-      <main className="flex-1 overflow-y-auto overscroll-contain">
-        {tab === "sarrafiye" && <SarrafiyeTab rows={sarrafiye} />}
-        {tab === "doviz" && <DovizTab rows={doviz} pariteler={pariteler} />}
-        {tab === "iletisim" && <IletisimTab />}
+      {/* İçerik alanı — scroll'u her sekme kendi içinde yönetir
+          (Sarrafiye/Döviz pull-to-refresh, İletişim düz scroll). */}
+      <main className="flex-1 overflow-hidden">
+        {tab === "sarrafiye" && (
+          <SarrafiyeTab rows={sarrafiye} onRefresh={refresh} />
+        )}
+        {tab === "doviz" && (
+          <DovizTab rows={doviz} pariteler={pariteler} onRefresh={refresh} />
+        )}
+        {tab === "iletisim" && (
+          <div className="h-full overflow-y-auto overscroll-contain">
+            <IletisimTab />
+          </div>
+        )}
       </main>
 
       <MobileTabBar active={tab} onChange={setTab} />
