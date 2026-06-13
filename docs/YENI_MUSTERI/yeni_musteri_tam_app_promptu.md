@@ -18,8 +18,8 @@
 3. Müşteri **logosu** (kare PNG, tercihen şeffaf ~1024px) hazır olsun.
 4. Araçlar (Node, Android SDK, JDK 21, Xcode 16.4, CocoaPods) bu Mac'te kurulu — tekrar gerekmez.
 5. Web/backend yayını + mağaza hesapları için yanına bu iki dokümanı al:
-   - `docs/YENI_MUSTERI_REHBERI.md` → Hostinger domain + Railway (backend/web) + DNS + admin (adım adım)
-   - `docs/MAGAZA_HESAP_VE_YAYIN_REHBERI.md` → App Store + Google Play hesap açma + yayınlama
+   - `docs/YENI_MUSTERI/YENI_MUSTERI_REHBERI.md` → Hostinger domain + Railway (backend/web) + DNS + admin (adım adım)
+   - `docs/YENI_MUSTERI/MAGAZA_HESAP_VE_YAYIN_REHBERI.md` → App Store + Google Play hesap açma + yayınlama
 
 ---
 
@@ -124,12 +124,12 @@ Selam Claude. Workspace'te iki klasör var: şablon "dadaskuyumculuk" ve yeni/bo
    - iOS: xcodebuild simülatör build (CODE_SIGNING_ALLOWED=NO) → BUILD SUCCEEDED;
      istersen simülatörde çalıştır + screenshot
 
-7. Web/backend YAYINI (deploy): docs/YENI_MUSTERI_REHBERI.md'yi takip et —
+7. Web/backend YAYINI (deploy): docs/YENI_MUSTERI/YENI_MUSTERI_REHBERI.md'yi takip et —
    Hostinger domain ({{DOMAIN}}), Railway backend+frontend+Postgres, env vars
    (CORS_ORIGINS'e {{DOMAIN}} + mobil için capacitor origin'i isteğe bağlı; biz mobilde
    CapacitorHttp kullandığımız için CORS'a mobil eklemek ZORUNLU değil), DNS, admin.
 
-8. MAĞAZA YAYINI: docs/MAGAZA_HESAP_VE_YAYIN_REHBERI.md'yi takip et —
+8. MAĞAZA YAYINI: docs/YENI_MUSTERI/MAGAZA_HESAP_VE_YAYIN_REHBERI.md'yi takip et —
    müşterinin Apple Developer + Google Play hesapları, .aab/iOS upload.
 
 ═══════════════════════════════════════════════════════════════
