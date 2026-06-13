@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Cinzel, Inter } from "next/font/google";
 
 import { CookieBanner } from "@/components/CookieBanner";
@@ -22,6 +22,13 @@ export const metadata: Metadata = {
   title: "Dadaş Kuyumculuk — Canlı Altın ve Döviz Fiyatları",
   description:
     "1972'den beri faaliyet gösteren Dadaş Kuyumculuk'tan canlı altın, döviz ve parite fiyatları.",
+};
+
+// viewport-fit=cover → içerik status bar/çentik arkasına uzanır (mobil edge-to-edge).
+// safe-area-inset-* değerleri ancak bununla dolu gelir; gold header status bar'ı kaplar.
+export const viewport: Viewport = {
+  viewportFit: "cover",
+  themeColor: "#B89B5E",
 };
 
 export default function RootLayout({
