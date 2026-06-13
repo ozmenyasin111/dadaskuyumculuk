@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { Capacitor } from "@capacitor/core";
 
 const STORAGE_KEY = "dadas-cookie-consent";
 
@@ -9,6 +10,8 @@ export function CookieBanner() {
   const [show, setShow] = useState(false);
 
   useEffect(() => {
+    // Native mobil uygulamada çerez banner'ı gösterilmez.
+    if (Capacitor.isNativePlatform()) return;
     if (!localStorage.getItem(STORAGE_KEY)) setShow(true);
   }, []);
 
