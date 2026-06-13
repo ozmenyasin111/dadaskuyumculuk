@@ -42,3 +42,6 @@ docs/Ekran Resmi*.png
 docs/*.mov
 docs/IMG-*.jpg
 docs/Gemini_Generated_Image_*.png
+
+# TypeScript build cache
+*.tsbuildinfo
