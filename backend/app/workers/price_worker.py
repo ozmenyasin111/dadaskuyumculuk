@@ -28,6 +28,55 @@ log = logging.getLogger("price_worker")
 TR_TZ = ZoneInfo("Europe/Istanbul")
 PARITE_KEY_PREFIX = "PARITE."
 
+# Son geçerli ham değerler: kategori -> sembol -> {bid, ask}.
+# finansveri bir sembolü 0/eksik döndürdüğünde (sunucu arızası) satırı düşürmek
+# yerine bununla doldururuz → ekran asla boşalmaz (müşteri "2 değer kaldı" sorununu
+# bir daha görmez). Süreç içinde tutulur; restart sonrası ilk geçerli tick'le dolar.
+_last_good_raw: dict[str, dict[str, dict]] = {}
+
+# Eksik-veri durumu: sadece "başladı"/"düzeldi" anlarında loglamak için (her tick
+# spam'ını önler). active=şu an doldurma var mı, since=ne zaman başladı.
+_backfill_state: dict[str, object] = {"active": False, "since": None}
+
+
+def _is_valid_raw(v: object) -> bool:
+    """bid ve ask var mı ve ikisi de > 0 mı?"""
+    if not isinstance(v, dict):
+        return False
+    bid = v.get("bid")
+    ask = v.get("ask")
+    try:
+        return bid is not None and ask is not None and float(bid) > 0 and float(ask) > 0
+    except (TypeError, ValueError):
+        return False
+
+
+def _backfill_fiyatlar(fiyatlar: dict) -> list[str]:
+    """Gelen geçerli değerleri `_last_good_raw`'a kaydeder; eksik/0 olan sembolleri
+    son geçerli değerle doldurur. Doldurulan `KATEGORI.SEMBOL` listesini döner (log için).
+    `fiyatlar` yerinde değiştirilir; geçerli (canlı) değerlere asla dokunulmaz."""
+    # 1) Bu tick'teki geçerli değerleri son-iyi deposuna yaz
+    for cat, node in fiyatlar.items():
+        if not isinstance(node, dict):
+            continue
+        store = _last_good_raw.setdefault(cat, {})
+        for sym, v in node.items():
+            if _is_valid_raw(v):
+                store[sym] = {"bid": float(v["bid"]), "ask": float(v["ask"])}
+
+    # 2) Eksik/0 gelen sembolleri son-iyi değerle doldur
+    backfilled: list[str] = []
+    for cat, store in _last_good_raw.items():
+        node = fiyatlar.get(cat)
+        if not isinstance(node, dict):
+            node = {}
+            fiyatlar[cat] = node
+        for sym, good in store.items():
+            if not _is_valid_raw(node.get(sym)):
+                node[sym] = dict(good)
+                backfilled.append(f"{cat}.{sym}")
+    return backfilled
+
 
 async def _tick() -> None:
     try:
@@ -39,6 +88,30 @@ async def _tick() -> None:
 
     fiyatlar = payload.get("fiyatlar", {})
     guncellendi = payload.get("guncellendi", 0)
+
+    # finansveri 0/eksik döndüyse satırları düşürmemek için son geçerli değerle doldur.
+    # Loglama sadece durum değişiminde: "başladı" ve "düzeldi" (her tick spam'ı yok).
+    backfilled = _backfill_fiyatlar(fiyatlar)
+    now_tr = datetime.now(TR_TZ)
+    if backfilled and not _backfill_state["active"]:
+        _backfill_state["active"] = True
+        _backfill_state["since"] = now_tr
+        log.warning(
+            "finansveri EKSİK veri BAŞLADI (%s) — son değer gösteriliyor (%d sembol): %s",
+            now_tr.strftime("%H:%M:%S"),
+            len(backfilled),
+            ", ".join(sorted(backfilled)),
+        )
+    elif not backfilled and _backfill_state["active"]:
+        since = _backfill_state["since"]
+        dur = int((now_tr - since).total_seconds()) if since else 0
+        _backfill_state["active"] = False
+        _backfill_state["since"] = None
+        log.warning(
+            "finansveri veri DÜZELDİ (%s) — tüm semboller canlı (%d sn sürdü)",
+            now_tr.strftime("%H:%M:%S"),
+            dur,
+        )
 
     s = cache.get_settings()
     rows = compute_prices(
