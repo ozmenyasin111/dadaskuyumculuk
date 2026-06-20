@@ -22,6 +22,10 @@ class Settings(BaseSettings):
 
     cors_origins: str = "http://localhost:3000"
 
+    # Telegram bildirimi (finansveri eksik/0 veri başladı-düzeldi). Boşsa devre dışı.
+    telegram_bot_token: str = ""
+    telegram_chat_id: str = ""
+
     @property
     def cors_origin_list(self) -> list[str]:
         return [o.strip() for o in self.cors_origins.split(",") if o.strip()]

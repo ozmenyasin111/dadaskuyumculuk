@@ -21,6 +21,7 @@ from app.services.bootstrap import hydrate_baselines_cache, hydrate_settings_cac
 from app.services.broadcaster import broadcast_prices
 from app.services.cache import BaselineEntry, cache
 from app.services.finansveri import FinansveriError, fetch_prices
+from app.services.notify import notify_telegram
 from app.services.processor import PriceRow, compute_prices, extract_pariteler
 
 log = logging.getLogger("price_worker")
@@ -96,22 +97,28 @@ async def _tick() -> None:
     if backfilled and not _backfill_state["active"]:
         _backfill_state["active"] = True
         _backfill_state["since"] = now_tr
+        hhmm = now_tr.strftime("%H:%M:%S")
         log.warning(
             "finansveri EKSİK veri BAŞLADI (%s) — son değer gösteriliyor (%d sembol): %s",
-            now_tr.strftime("%H:%M:%S"),
-            len(backfilled),
-            ", ".join(sorted(backfilled)),
+            hhmm, len(backfilled), ", ".join(sorted(backfilled)),
         )
+        asyncio.create_task(notify_telegram(
+            f"⚠️ Dadaş: finansveri eksik veri ({hhmm}) — {len(backfilled)} sembol son "
+            f"değerle gösteriliyor.\n{', '.join(sorted(backfilled))}"
+        ))
     elif not backfilled and _backfill_state["active"]:
         since = _backfill_state["since"]
         dur = int((now_tr - since).total_seconds()) if since else 0
         _backfill_state["active"] = False
         _backfill_state["since"] = None
+        hhmm = now_tr.strftime("%H:%M:%S")
         log.warning(
             "finansveri veri DÜZELDİ (%s) — tüm semboller canlı (%d sn sürdü)",
-            now_tr.strftime("%H:%M:%S"),
-            dur,
+            hhmm, dur,
         )
+        asyncio.create_task(notify_telegram(
+            f"✅ Dadaş: finansveri düzeldi ({hhmm}) — tüm fiyatlar canlı ({dur} sn sürdü)."
+        ))
 
     s = cache.get_settings()
     rows = compute_prices(
