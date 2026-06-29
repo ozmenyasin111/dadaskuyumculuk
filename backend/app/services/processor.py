@@ -33,10 +33,11 @@ VOLATILITY_ELIGIBLE_SYMBOLS = {
 # Sarrafiye'deki Gram Altın satırı bu sembolü kaynak alır, diğer altın ürünleri
 # bu satırın display alış/satış değeriyle milyem çarpılarak hesaplanır.
 HAS_ALTIN_KEY = "SARRAFIYE.KULCEALTIN"
-# API'de SARRAFIYE besleme zaman zaman duruyor (bid/ask=0). Bu olduğunda
-# MADEN.ALTIN canlı kaldığı için fallback olarak onu kullanıp tüm milyem
-# zincirini ayakta tutuyoruz.
-HAS_ALTIN_FALLBACK_KEY = "MADEN.ALTIN"
+# API'de SARRAFIYE.KULCEALTIN beslemesi 0/eksik gelirse milyem zincirini ayakta
+# tutmak için fallback. ÖNEMLİ: Eskiden MADEN.ALTIN (Has Altın) kullanılıyordu ama
+# o FARKLI bir ürün (gram altından ~%1.5 yüksek) + zaman zaman donuyor. Onun yerine
+# birebir aynı değerdeki DS_KULCEALTIN ikizini kullanıyoruz (Gram Altın ile ~%0.01).
+HAS_ALTIN_FALLBACK_KEY = "DOVIZ.DS_KULCEALTIN"
 
 
 @dataclass(frozen=True)

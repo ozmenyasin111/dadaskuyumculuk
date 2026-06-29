@@ -20,6 +20,7 @@ from app.models import DailyBaseline
 from app.services.bootstrap import hydrate_baselines_cache, hydrate_settings_cache
 from app.services.broadcaster import broadcast_prices
 from app.services.cache import BaselineEntry, cache
+from app.services.failover import apply_failover, check_total_freeze
 from app.services.finansveri import FinansveriError, fetch_prices
 from app.services.notify import notify_telegram
 from app.services.processor import PriceRow, compute_prices, extract_pariteler
@@ -79,6 +80,70 @@ def _backfill_fiyatlar(fiyatlar: dict) -> list[str]:
     return backfilled
 
 
+def _fmt(v: object) -> str:
+    """Bildirim için sayı biçimi: küçük değerler 4 hane, büyükler 2 hane."""
+    try:
+        f = float(v)
+    except (TypeError, ValueError):
+        return "?"
+    return f"{f:,.4f}" if abs(f) < 100 else f"{f:,.2f}"
+
+
+def _notify_failover_event(ev: dict) -> None:
+    """Failover geçiş/geri-dönüş olayını log + Telegram'a yazar."""
+    now_tr = datetime.now(TR_TZ)
+    hhmm = now_tr.strftime("%H:%M:%S")
+    if ev["type"] == "switch":
+        mins = (ev.get("primary_age") or 0) // 60
+        log.warning(
+            "failover: %s ana kaynak (%s) ~%d dk donuk → alternatif %s'e geçildi",
+            ev["name"], ev["primary"], mins, ev["alt"],
+        )
+        msg = (
+            f"🔁 Dadaş ({hhmm}): \"{ev['name']}\" ana kaynağı {ev['primary']} "
+            f"~{mins} dk donuk → alternatif {ev['alt']}'e geçildi.\n"
+            f"Ana (donuk): alış {_fmt(ev['old_bid'])} / satış {_fmt(ev['old_ask'])}\n"
+            f"Alternatif : alış {_fmt(ev['new_bid'])} / satış {_fmt(ev['new_ask'])}\n"
+            f"(site fiyatı artık alternatif + admin kârı ile hesaplanıyor)"
+        )
+    else:  # recover
+        dur = ev.get("dur_sec", 0)
+        log.warning(
+            "failover: %s ana kaynak (%s) düzeldi (%d sn sürdü) — ana kaynağa dönüldü",
+            ev["name"], ev["primary"], dur,
+        )
+        msg = (
+            f"✅ Dadaş ({hhmm}): \"{ev['name']}\" ana kaynağa ({ev['primary']}) döndü "
+            f"({dur} sn alternatifte kaldı).\n"
+            f"Ana (canlı): alış {_fmt(ev['new_bid'])} / satış {_fmt(ev['new_ask'])}"
+        )
+    asyncio.create_task(notify_telegram(msg))
+
+
+def _notify_total_freeze_event(ev: dict) -> None:
+    """Toptan-donma başla/düzeldi olayını log + Telegram'a yazar."""
+    now_tr = datetime.now(TR_TZ)
+    hhmm = now_tr.strftime("%H:%M:%S")
+    thr_min = int(settings.total_freeze_threshold_seconds // 60)
+    if ev["type"] == "total_freeze_start":
+        age = ev.get("freshest_age_sec")
+        age_txt = f"en taze sembol bile ~{age // 60} dk eski" if age is not None else "hiçbir sembol okunamıyor"
+        log.error("TOPTAN DONMA (%s) — tüm ana+alternatif kaynaklar donuk (%s)", hhmm, age_txt)
+        msg = (
+            f"🚨 Dadaş ({hhmm}): TÜM kaynaklar donuk! Ana ve alternatif sembollerin "
+            f"hepsi ~{thr_min} dk'dır güncellenmiyor ({age_txt}). finansveri toptan "
+            f"arızalı olabilir — site eski fiyat gösteriyor, alternatif de yok."
+        )
+    else:  # total_freeze_recover
+        dur = ev.get("dur_sec", 0)
+        log.warning("TOPTAN DONMA DÜZELDİ (%s) — %d sn sürdü", hhmm, dur)
+        msg = (
+            f"✅ Dadaş ({hhmm}): Besleme düzeldi — fiyatlar yeniden canlı "
+            f"({dur} sn toptan donuk kaldı)."
+        )
+    asyncio.create_task(notify_telegram(msg))
+
+
 async def _tick() -> None:
     try:
         payload = await fetch_prices()
@@ -89,6 +154,19 @@ async def _tick() -> None:
 
     fiyatlar = payload.get("fiyatlar", {})
     guncellendi = payload.get("guncellendi", 0)
+
+    # Önce "toptan donma" kontrolü (failover fiyatlar'ı ezmeden ÖNCE): ana+alternatif
+    # tüm kaynakların en tazesi bile eşikten eskiyse failover kurtaramaz → tek seferlik
+    # alarm at (sabahki gibi finansveri komple durduğunda haber alalım).
+    tf = check_total_freeze(fiyatlar)
+    if tf is not None:
+        _notify_total_freeze_event(tf)
+
+    # Donuk (timestamp eski) ana kaynakları taze alternatifle değiştir — compute'tan
+    # ÖNCE, böylece marjlar alternatif değere normal eklenir. Geçiş/dönüş anlarında
+    # Telegram bildirimi at (her tick spam'ı yok; sadece olay anında).
+    for ev in apply_failover(fiyatlar):
+        _notify_failover_event(ev)
 
     # finansveri 0/eksik döndüyse satırları düşürmemek için son geçerli değerle doldur.
     # Loglama sadece durum değişiminde: "başladı" ve "düzeldi" (her tick spam'ı yok).

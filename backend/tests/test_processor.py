@@ -137,11 +137,12 @@ def test_multiplier_inherits_gram_altin_volatility(volatile_fiyatlar):
     assert abs(ceyrek.satis - 7700 * 1.654) < 0.01
 
 
-def test_kulcealtin_falls_back_to_maden_altin_when_zero():
-    """API SARRAFIYE beslemesini durdurduğunda (bid/ask=0) MADEN.ALTIN'a düşmeli.
+def test_kulcealtin_falls_back_to_ds_kulcealtin_when_zero():
+    """API SARRAFIYE beslemesini durdurduğunda (bid/ask=0) birebir aynı değerdeki
+    DOVIZ.DS_KULCEALTIN ikizine düşmeli (eski MADEN.ALTIN farklı bir üründü).
     Gram Altın satırı kaybolmamalı, multiplier zinciri ayakta kalmalı."""
     fiyatlar = {
-        "MADEN": {"ALTIN": {"bid": 6637.18, "ask": 6690.98}},
+        "DOVIZ": {"DS_KULCEALTIN": {"bid": 6637.18, "ask": 6690.98}},
         "SARRAFIYE": {"KULCEALTIN": {"bid": 0, "ask": 0}},
     }
     margins = [
