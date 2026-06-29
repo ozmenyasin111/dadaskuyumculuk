@@ -41,8 +41,8 @@ def test_fresh_primary_no_switch():
 
 def test_stale_primary_switches_to_alternative():
     now = datetime.now(timezone.utc)
-    # KULCEALTIN 4 dk donuk (eşik 180sn), alternatif taze
-    f = _payload(now, kulce_age=240, ds_kulce_age=5, kulce_bid=6000.0, ds_bid=6001.0)
+    # KULCEALTIN 6 dk donuk (eşik 300sn), alternatif taze
+    f = _payload(now, kulce_age=360, ds_kulce_age=5, kulce_bid=6000.0, ds_bid=6001.0)
     events = apply_failover(f, now)
     switch = [e for e in events if e["primary"] == "SARRAFIYE.KULCEALTIN"]
     assert len(switch) == 1
@@ -56,11 +56,11 @@ def test_stale_primary_switches_to_alternative():
 
 def test_no_duplicate_switch_event_on_consecutive_ticks():
     now = datetime.now(timezone.utc)
-    f1 = _payload(now, kulce_age=240, ds_kulce_age=5)
+    f1 = _payload(now, kulce_age=360, ds_kulce_age=5)
     ev1 = apply_failover(f1, now)
     assert any(e["type"] == "switch" for e in ev1)
     # ikinci tick: hâlâ donuk → tekrar bildirim ATMAMALI
-    f2 = _payload(now, kulce_age=300, ds_kulce_age=5)
+    f2 = _payload(now, kulce_age=420, ds_kulce_age=5)
     ev2 = apply_failover(f2, now)
     assert ev2 == []
     # ama değer yine alternatifle değiştirilmiş olmalı
@@ -69,7 +69,7 @@ def test_no_duplicate_switch_event_on_consecutive_ticks():
 
 def test_recover_event_when_primary_fresh_again():
     now = datetime.now(timezone.utc)
-    apply_failover(_payload(now, kulce_age=240, ds_kulce_age=5), now)
+    apply_failover(_payload(now, kulce_age=360, ds_kulce_age=5), now)
     # ana kaynak tazelendi
     f = _payload(now, kulce_age=2, ds_kulce_age=5)
     events = apply_failover(f, now)
@@ -81,7 +81,7 @@ def test_recover_event_when_primary_fresh_again():
 def test_no_switch_when_alternative_also_stale():
     now = datetime.now(timezone.utc)
     # her ikisi de donuk → değişiklik yok, değer korunur
-    f = _payload(now, kulce_age=240, ds_kulce_age=400)
+    f = _payload(now, kulce_age=360, ds_kulce_age=600)
     events = apply_failover(f, now)
     assert [e for e in events if e["primary"] == "SARRAFIYE.KULCEALTIN"] == []
     assert f["SARRAFIYE"]["KULCEALTIN"]["bid"] == 6000.0
@@ -90,7 +90,7 @@ def test_no_switch_when_alternative_also_stale():
 def test_scaled_alternative_divided_by_1000():
     now = datetime.now(timezone.utc)
     f = {
-        "MADEN": {"PARUSD": {"bid": 129.5, "ask": 130.0, "timestamp": _iso(now, 240)}},
+        "MADEN": {"PARUSD": {"bid": 129.5, "ask": 130.0, "timestamp": _iso(now, 360)}},
         "DOVIZ": {"DS_PARUSD": {"bid": 129500.0, "ask": 130000.0, "timestamp": _iso(now, 5)}},
     }
     apply_failover(f, now)

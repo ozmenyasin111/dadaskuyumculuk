@@ -21,9 +21,10 @@ class Settings(BaseSettings):
     poll_interval_seconds: float = 1.0
 
     # Bayatlık (staleness) eşikleri: bir sembolün son güncellemesi bu süreden eskiyse
-    # "donuk" sayılıp alternatif kaynağa geçilir. Altın/sarrafiye saniyede tıkladığı
-    # için 3 dk; döviz çiftleri daha seyrek geldiği için 5 dk (boşuna geçiş olmasın).
-    stale_threshold_gold_seconds: float = 180.0
+    # "donuk" sayılıp alternatif kaynağa geçilir. Altın/sarrafiye ve döviz için 5 dk
+    # (boşuna/çırpınan geçişleri azaltmak için). Belirli yavaş semboller için
+    # failover.PER_SYMBOL_THRESHOLD_SECONDS ile özel (daha uzun) eşik verilebilir.
+    stale_threshold_gold_seconds: float = 300.0
     stale_threshold_doviz_seconds: float = 300.0
 
     # "Toptan donma" alarmı: ana + alternatif TÜM kaynakların en tazesi bile bu süreden
