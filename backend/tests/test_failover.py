@@ -112,6 +112,26 @@ def test_doviz_uses_5min_threshold():
     assert f["DOVIZ"]["USDTRY"]["bid"] == 46.4  # dokunulmadı
 
 
+def test_usd_sar_use_20min_threshold():
+    now = datetime.now(timezone.utc)
+    # USDTRY 10 dk donuk: özel eşik 20 dk olduğu için HENÜZ geçiş YAPILMAMALI
+    f = {
+        "DOVIZ": {
+            "USDTRY": {"bid": 46.4, "ask": 46.6, "timestamp": _iso(now, 600)},
+            "DS_USDTRY": {"bid": 46.41, "ask": 46.61, "timestamp": _iso(now, 5)},
+            "SARTRY": {"bid": 12.2, "ask": 12.5, "timestamp": _iso(now, 600)},
+            "DS_SARTRY": {"bid": 12.21, "ask": 12.53, "timestamp": _iso(now, 5)},
+        },
+    }
+    events = apply_failover(f, now)
+    assert [e for e in events if e["primary"] in ("DOVIZ.USDTRY", "DOVIZ.SARTRY")] == []
+    assert f["DOVIZ"]["USDTRY"]["bid"] == 46.4  # dokunulmadı
+    # 21 dk olunca (20 dk eşiği aşınca) geçmeli
+    f["DOVIZ"]["USDTRY"]["timestamp"] = _iso(now, 1260)
+    events2 = apply_failover(f, now)
+    assert any(e["primary"] == "DOVIZ.USDTRY" and e["type"] == "switch" for e in events2)
+
+
 def test_total_freeze_alarm_when_everything_stale():
     now = datetime.now(timezone.utc)
     # Hem ana hem alternatif 11 dk donuk (eşik 10 dk) → toptan donma

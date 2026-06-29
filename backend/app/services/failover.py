@@ -60,6 +60,15 @@ _state: dict[str, dict] = {}
 # Toptan-donma durumu: {"active": bool, "since": datetime|None}.
 _total_freeze_state: dict[str, object] = {"active": False, "since": None}
 
+# Sembole özel bayatlık eşiği (saniye) — kategori varsayılanını ezer. USD/SAR non-DS
+# beslemesi yavaş/aralıklı güncellendiği için (USD ~2-5 dk, SAR ~9-18 dk) standart 5 dk
+# döviz eşiğinde çırpınıp gereksiz geçiş/bildirim üretiyordu → 20 dk. Değer birebir aynı
+# olduğu için bu süre boyunca biraz daha eski tick gösterilmesi sorun değil.
+PER_SYMBOL_THRESHOLD_SECONDS: dict[str, float] = {
+    "DOVIZ.USDTRY": 1200.0,
+    "DOVIZ.SARTRY": 1200.0,
+}
+
 
 def _split(key: str) -> tuple[str, str]:
     cat, _, sym = key.partition(".")
@@ -67,6 +76,8 @@ def _split(key: str) -> tuple[str, str]:
 
 
 def _threshold_seconds(primary_key: str) -> float:
+    if primary_key in PER_SYMBOL_THRESHOLD_SECONDS:
+        return PER_SYMBOL_THRESHOLD_SECONDS[primary_key]
     if primary_key.startswith("DOVIZ."):
         return settings.stale_threshold_doviz_seconds
     return settings.stale_threshold_gold_seconds
