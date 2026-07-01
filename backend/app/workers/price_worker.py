@@ -20,8 +20,19 @@ from app.models import DailyBaseline
 from app.services.bootstrap import hydrate_baselines_cache, hydrate_settings_cache
 from app.services.broadcaster import broadcast_prices
 from app.services.cache import BaselineEntry, cache
-from app.services.failover import apply_failover, check_total_freeze
-from app.services.finansveri import FinansveriError, fetch_prices
+from app.services.altinapi import AltinapiError
+from app.services.failover import (
+    apply_failover,
+    check_total_freeze,
+    patch_from_secondary,
+    unfilled_primaries,
+)
+from app.services.provider import (
+    AllProvidersDown,
+    active_provider,
+    fetch_prices_with_failover,
+    fetch_secondary,
+)
 from app.services.notify import notify_telegram
 from app.services.processor import PriceRow, compute_prices, extract_pariteler
 
@@ -144,20 +155,74 @@ def _notify_total_freeze_event(ev: dict) -> None:
     asyncio.create_task(notify_telegram(msg))
 
 
+def _notify_cross_provider_event(ev: dict) -> None:
+    """Tek-sembol cross-provider patch bildirimi: bir ürün finansveri'de (kendisi+ikizi)
+    donuk olduğu için sadece o ürün altinapi'den çekildi."""
+    now_tr = datetime.now(TR_TZ)
+    hhmm = now_tr.strftime("%H:%M:%S")
+    log.warning(
+        "cross-provider: %s (%s) finansveri'de donuk (kendisi+ikizi) → altinapi'den çekildi",
+        ev["name"], ev["primary"],
+    )
+    msg = (
+        f"🔧 Dadaş ({hhmm}): \"{ev['name']}\" finansveri'de donuk (hem kendisi hem ikizi) "
+        f"→ SADECE bu ürün altinapi'den çekildi (diğerleri finansveri'de).\n"
+        f"Eski (donuk): alış {_fmt(ev['old_bid'])} / satış {_fmt(ev['old_ask'])}\n"
+        f"altinapi    : alış {_fmt(ev['new_bid'])} / satış {_fmt(ev['new_ask'])}"
+    )
+    asyncio.create_task(notify_telegram(msg))
+
+
+def _notify_provider_event(ev: dict) -> None:
+    """Sağlayıcı geçişi (finansveri↔altinapi) başla/geri-dönüş bildirimini yazar."""
+    now_tr = datetime.now(TR_TZ)
+    hhmm = now_tr.strftime("%H:%M:%S")
+    if ev["type"] == "switch":  # → altinapi
+        reason = ev.get("reason", "arıza")
+        log.error("SAĞLAYICI GEÇİŞİ (%s): finansveri %s → altinapi", hhmm, reason)
+        msg = (
+            f"🔄 Dadaş ({hhmm}): finansveri {reason} → YEDEK kaynağa (altinapi) geçildi. "
+            f"Site altinapi verisiyle çalışmaya devam ediyor (fiyatlar canlı, marj/failover aktif)."
+        )
+    else:  # recover → finansveri
+        log.warning("SAĞLAYICI GERİ DÖNÜŞ (%s): finansveri düzeldi → ana kaynağa dönüldü", hhmm)
+        msg = (
+            f"✅ Dadaş ({hhmm}): finansveri düzeldi → ANA kaynağa (finansveri) geri dönüldü."
+        )
+    asyncio.create_task(notify_telegram(msg))
+
+
 async def _tick() -> None:
     try:
-        payload = await fetch_prices()
-    except FinansveriError as exc:
-        log.warning("worker: fetch başarısız: %s", exc)
+        payload, provider_name, prov_events = await fetch_prices_with_failover()
+    except AllProvidersDown as exc:
+        log.warning("worker: tüm sağlayıcılar başarısız: %s", exc)
         await cache.mark_unhealthy()
         return
+
+    # Sağlayıcı geçişi/geri-dönüşü olduysa Telegram'a haber ver.
+    for ev in prov_events:
+        _notify_provider_event(ev)
 
     fiyatlar = payload.get("fiyatlar", {})
     guncellendi = payload.get("guncellendi", 0)
 
-    # Önce "toptan donma" kontrolü (failover fiyatlar'ı ezmeden ÖNCE): ana+alternatif
-    # tüm kaynakların en tazesi bile eşikten eskiyse failover kurtaramaz → tek seferlik
-    # alarm at (sabahki gibi finansveri komple durduğunda haber alalım).
+    # Tek-sembol cross-provider patch: finansveri aktifken bir ürün HEM kendisi HEM ikizi
+    # donuksa (finansveri o ürünü besleyemiyor), sadece o ürünü altinapi'den çek. Diğer
+    # ürünler finansveri'de kalır → altinapi kotası korunur (yalnız boşluk varken 1 çağrı).
+    if provider_name == "finansveri":
+        unfilled = unfilled_primaries(fiyatlar)
+        if unfilled:
+            try:
+                sec = await fetch_secondary()
+                for ev in patch_from_secondary(fiyatlar, sec.get("fiyatlar", {}), unfilled):
+                    _notify_cross_provider_event(ev)
+            except AltinapiError as exc:
+                log.warning("worker: cross-provider patch için altinapi alınamadı: %s", exc)
+
+    # "Toptan donma" kontrolü (failover fiyatlar'ı ezmeden ÖNCE): aktif sağlayıcının
+    # ana+alternatif tüm kaynaklarının en tazesi bile eşikten eskiyse → tek seferlik alarm
+    # (artık ancak İKİ sağlayıcı birden ölürse tetiklenir).
     tf = check_total_freeze(fiyatlar)
     if tf is not None:
         _notify_total_freeze_event(tf)
@@ -276,7 +341,14 @@ async def _loop() -> None:
             await _tick()
         except Exception:
             log.exception("tick sırasında hata — bir sonraki tick'te devam ediliyor")
-        await asyncio.sleep(settings.poll_interval_seconds)
+        # Dinamik aralık: finansveri'deyken hızlı (1 sn), altinapi'deyken yavaş (3 sn,
+        # Starter 30/dk kotası). Aktif sağlayıcıya göre seçilir.
+        interval = (
+            settings.poll_interval_seconds
+            if active_provider() == "finansveri"
+            else settings.altinapi_poll_interval_seconds
+        )
+        await asyncio.sleep(interval)
 
 
 async def start_price_worker() -> asyncio.Task:

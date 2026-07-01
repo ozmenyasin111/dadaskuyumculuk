@@ -5,7 +5,14 @@ from datetime import datetime, timedelta, timezone
 import pytest
 
 from app.services import failover
-from app.services.failover import apply_failover, check_total_freeze
+from app.services.failover import (
+    apply_failover,
+    check_total_freeze,
+    freshest_mapped_age,
+    patch_from_secondary,
+    resolve_fresh,
+    unfilled_primaries,
+)
 
 
 def _iso(now: datetime, age_sec: float) -> str:
@@ -130,6 +137,61 @@ def test_usd_sar_use_20min_threshold():
     f["DOVIZ"]["USDTRY"]["timestamp"] = _iso(now, 1260)
     events2 = apply_failover(f, now)
     assert any(e["primary"] == "DOVIZ.USDTRY" and e["type"] == "switch" for e in events2)
+
+
+def test_unfilled_when_primary_and_alt_both_stale():
+    now = datetime.now(timezone.utc)
+    # KULCEALTIN ve ikizi ikisi de donuk → unfilled listesinde olmalı
+    f = _payload(now, kulce_age=400, ds_kulce_age=400)
+    uf = unfilled_primaries(f, now)
+    assert ("Gram Altın", "SARRAFIYE.KULCEALTIN") in uf
+
+
+def test_not_unfilled_when_alt_fresh():
+    now = datetime.now(timezone.utc)
+    # primary donuk ama ikiz taze → finansveri içinde çözülür, unfilled DEĞİL
+    f = _payload(now, kulce_age=400, ds_kulce_age=5)
+    uf = unfilled_primaries(f, now)
+    assert ("Gram Altın", "SARRAFIYE.KULCEALTIN") not in uf
+
+
+def test_patch_from_secondary_fills_only_unfilled():
+    now = datetime.now(timezone.utc)
+    # finansveri: KULCEALTIN + ikizi donuk
+    primary = _payload(now, kulce_age=400, ds_kulce_age=400, kulce_bid=6000.0)
+    # altinapi (secondary): KULCEALTIN taze
+    secondary = _payload(now, kulce_age=2, ds_kulce_age=2, kulce_bid=6010.0)
+    uf = unfilled_primaries(primary, now)
+    events = patch_from_secondary(primary, secondary, uf, now)
+    assert any(e["primary"] == "SARRAFIYE.KULCEALTIN" and e["type"] == "cross_provider" for e in events)
+    # finansveri verisi artık altinapi değerini gösterir
+    assert primary["SARRAFIYE"]["KULCEALTIN"]["bid"] == 6010.0
+
+
+def test_patch_skips_when_secondary_also_stale():
+    now = datetime.now(timezone.utc)
+    primary = _payload(now, kulce_age=400, ds_kulce_age=400, kulce_bid=6000.0)
+    secondary = _payload(now, kulce_age=400, ds_kulce_age=400, kulce_bid=6010.0)  # altinapi de donuk
+    uf = unfilled_primaries(primary, now)
+    events = patch_from_secondary(primary, secondary, uf, now)
+    assert events == []
+    assert primary["SARRAFIYE"]["KULCEALTIN"]["bid"] == 6000.0  # dokunulmadı
+
+
+def test_freshest_mapped_age():
+    now = datetime.now(timezone.utc)
+    f = _payload(now, kulce_age=120, ds_kulce_age=300)  # en taze 120sn
+    age = freshest_mapped_age(f, now)
+    assert age is not None and 115 <= age <= 125
+
+
+def test_resolve_fresh_prefers_primary_then_alt():
+    now = datetime.now(timezone.utc)
+    f = _payload(now, kulce_age=5, ds_kulce_age=5, kulce_bid=6000.0, ds_bid=6001.0)
+    assert resolve_fresh(f, "SARRAFIYE.KULCEALTIN", now) == (6000.0, 6090.0)
+    # primary donuk → ikize düşer
+    f2 = _payload(now, kulce_age=400, ds_kulce_age=5, kulce_bid=6000.0, ds_bid=6001.0)
+    assert resolve_fresh(f2, "SARRAFIYE.KULCEALTIN", now) == (6001.0, 6091.0)
 
 
 def test_total_freeze_alarm_when_everything_stale():

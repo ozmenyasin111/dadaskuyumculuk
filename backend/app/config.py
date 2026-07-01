@@ -11,6 +11,16 @@ class Settings(BaseSettings):
     finansveri_api_key: str = ""
     finansveri_base_url: str = "https://api.finansveri.com"
 
+    # Yedek sağlayıcı: altinapi.com (finansveri çökünce/donunca otomatik geçilir).
+    # Anahtar Railway env ALTINAPI_API_KEY ile ezilebilir; default canlı uptime için.
+    altinapi_base_url: str = "https://altinapi.com/api/v1"
+    altinapi_api_key: str = "hapi_121fc19abbd04900aa7ab95720932227"
+
+    # finansveri TAMAMEN donuk sayılma eşiği: ana kaynaklarımız + alternatiflerinin
+    # hiçbiri bu süreden daha taze değilse (finansveri bize tek taze sayı veremiyor)
+    # tüm sistem altinapi'ye geçer. 5 dk.
+    provider_stale_seconds: float = 300.0
+
     jwt_secret: str = "dev_change_me_super_secret_jwt_signing_key_at_least_32_chars"
     jwt_expires_hours: int = 168
     jwt_algorithm: str = "HS256"
@@ -18,7 +28,11 @@ class Settings(BaseSettings):
     admin_bootstrap_username: str = "admin"
     admin_bootstrap_password: str = "admin123"
 
+    # Poll aralığı aktif sağlayıcıya göre dinamik: finansveri sınırsız → 1 sn (gerçek
+    # zamanlı); altinapi Starter 30/dk → 3 sn (20/dk, 429 marjı). Worker active_provider'a
+    # bakıp seçer.
     poll_interval_seconds: float = 1.0
+    altinapi_poll_interval_seconds: float = 3.0
 
     # Bayatlık (staleness) eşikleri: bir sembolün son güncellemesi bu süreden eskiyse
     # "donuk" sayılıp alternatif kaynağa geçilir. Altın/sarrafiye ve döviz için 5 dk

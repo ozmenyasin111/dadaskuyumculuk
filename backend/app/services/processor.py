@@ -34,10 +34,10 @@ VOLATILITY_ELIGIBLE_SYMBOLS = {
 # bu satırın display alış/satış değeriyle milyem çarpılarak hesaplanır.
 HAS_ALTIN_KEY = "SARRAFIYE.KULCEALTIN"
 # API'de SARRAFIYE.KULCEALTIN beslemesi 0/eksik gelirse milyem zincirini ayakta
-# tutmak için fallback. ÖNEMLİ: Eskiden MADEN.ALTIN (Has Altın) kullanılıyordu ama
-# o FARKLI bir ürün (gram altından ~%1.5 yüksek) + zaman zaman donuyor. Onun yerine
-# birebir aynı değerdeki DS_KULCEALTIN ikizini kullanıyoruz (Gram Altın ile ~%0.01).
-HAS_ALTIN_FALLBACK_KEY = "DOVIZ.DS_KULCEALTIN"
+# tutmak için fallback. altinapi'ye geçişle (2026-06-30) DS_ sembolleri kalmadı;
+# en yakın canlı sembol "GRAM ALTIN.ALTIN" (Gram Altın ile ~%0.5). Eski not: MADEN.ALTIN
+# kullanılıyordu ama o farklı ürün (~%1.5 yüksek) + altinapi'de yok.
+HAS_ALTIN_FALLBACK_KEY = "GRAM ALTIN.ALTIN"
 
 
 @dataclass(frozen=True)

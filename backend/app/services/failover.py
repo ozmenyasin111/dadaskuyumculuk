@@ -207,6 +207,76 @@ def apply_failover(fiyatlar: dict, now: datetime | None = None) -> list[dict]:
     return events
 
 
+def _alts_for(primary: str) -> list[tuple[str, float]]:
+    for _name, prim, alts in FAILOVER_MAP:
+        if prim == primary:
+            return alts
+    return []
+
+
+def resolve_fresh(fiyatlar: dict, primary: str, now: datetime) -> tuple[float, float] | None:
+    """Bir ürün için TAZE (ölçekli) bid/ask döner: önce ana kaynak, sonra alternatifler.
+    Hiçbiri taze değilse None. Hem failover hem cross-provider patch bunu kullanır."""
+    thr = _threshold_seconds(primary)
+    cur = _read(fiyatlar, primary, now)
+    if cur and cur["valid"] and cur["age"] is not None and cur["age"] <= thr:
+        return (cur["bid"], cur["ask"])
+    for alt_key, scale in _alts_for(primary):
+        av = _read(fiyatlar, alt_key, now)
+        if av and av["valid"] and av["age"] is not None and av["age"] <= thr:
+            return (av["bid"] / scale, av["ask"] / scale)
+    return None
+
+
+def unfilled_primaries(fiyatlar: dict, now: datetime | None = None) -> list[tuple[str, str]]:
+    """Ne ana kaynağı ne de alternatifi taze olan ürünler [(ad, primary), ...].
+    Bunlar bu sağlayıcıdan beslenemiyor → yedek sağlayıcıdan çekilmeli."""
+    now = now or datetime.now(timezone.utc)
+    out = []
+    for name, primary, _alts in FAILOVER_MAP:
+        if resolve_fresh(fiyatlar, primary, now) is None:
+            out.append((name, primary))
+    return out
+
+
+def patch_from_secondary(
+    fiyatlar: dict, secondary: dict, unfilled: list[tuple[str, str]], now: datetime | None = None
+) -> list[dict]:
+    """`unfilled` ürünleri yedek sağlayıcının (`secondary`) taze değeriyle doldurur.
+    Doldurulan her ürün için olay döner (Telegram için)."""
+    now = now or datetime.now(timezone.utc)
+    events = []
+    for name, primary in unfilled:
+        val = resolve_fresh(secondary, primary, now)
+        if val is None:
+            continue  # yedek de veremedi → dokunma (backfill son-iyi değeri korur)
+        old = _read(fiyatlar, primary, now)
+        cat, sym = _split(primary)
+        fiyatlar.setdefault(cat, {})[sym] = {"bid": val[0], "ask": val[1], "timestamp": None}
+        events.append({
+            "type": "cross_provider",
+            "name": name,
+            "primary": primary,
+            "old_bid": old["bid"] if old else None,
+            "old_ask": old["ask"] if old else None,
+            "new_bid": val[0],
+            "new_ask": val[1],
+        })
+    return events
+
+
+def freshest_mapped_age(fiyatlar: dict, now: datetime | None = None) -> float | None:
+    """Ana kaynak + alternatif tüm sembollerin EN TAZESİNİN yaşı (saniye). Hiç geçerli
+    sembol yoksa None. Sağlayıcı sağlığı için: bu değer eşikten büyükse sağlayıcı ölü."""
+    now = now or datetime.now(timezone.utc)
+    ages = [
+        v["age"]
+        for key in _all_mapped_keys()
+        if (v := _read(fiyatlar, key, now)) is not None and v["valid"] and v["age"] is not None
+    ]
+    return min(ages) if ages else None
+
+
 def _all_mapped_keys() -> list[str]:
     """Haritadaki tüm ana + alternatif sembol anahtarları (tekrarsız)."""
     keys: list[str] = []

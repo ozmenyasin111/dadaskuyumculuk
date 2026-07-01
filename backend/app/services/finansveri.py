@@ -17,15 +17,18 @@ class FinansveriError(Exception):
     pass
 
 
-async def fetch_prices() -> dict:
-    """`{fiyatlar, guncellendi}` döner. Başarısız olursa `FinansveriError` fırlatır."""
+async def fetch_prices(max_attempts: int = 4, timeout: float = 10.0) -> dict:
+    """`{fiyatlar, guncellendi}` döner. Başarısız olursa `FinansveriError` fırlatır.
+
+    Sağlayıcı failover'ında `max_attempts=1` ile çağrılır (hızlı başarısız ol →
+    altinapi'ye hemen geç, 7 sn backoff bekleme)."""
     url = f"{settings.finansveri_base_url}/v1/fiyatlar"
     headers = {"X-API-Key": settings.finansveri_api_key}
 
     wait_ms = 1000
     last_err: Exception | None = None
-    async with httpx.AsyncClient(timeout=10.0) as client:
-        for attempt in range(4):
+    async with httpx.AsyncClient(timeout=timeout) as client:
+        for attempt in range(max_attempts):
             try:
                 resp = await client.get(url, headers=headers)
                 if resp.status_code == 429:
@@ -38,6 +41,7 @@ async def fetch_prices() -> dict:
             except (httpx.HTTPError, ValueError) as exc:
                 last_err = exc
                 log.warning("finansveri fetch error (attempt %d): %s", attempt, exc)
-                await asyncio.sleep(wait_ms / 1000)
-                wait_ms *= 2
+                if attempt < max_attempts - 1:  # son denemede boşuna bekleme
+                    await asyncio.sleep(wait_ms / 1000)
+                    wait_ms *= 2
     raise FinansveriError(f"failed after retries: {last_err}")
