@@ -9,8 +9,8 @@ Değiştirme `fiyatlar` üzerinde (compute'tan ÖNCE) yapılır → `compute_pri
 admin marjları normal eklenir, site alternatif tabanlı canlı fiyatı gösterir. Geçiş ve
 geri dönüş anlarında Telegram bildirimi için olay listesi döndürülür.
 
-Eşik: altın/sarrafiye/maden = `stale_threshold_gold_seconds` (3 dk),
-döviz (DOVIZ.*) = `stale_threshold_doviz_seconds` (5 dk).
+Eşik: altın/sarrafiye/maden = `stale_threshold_gold_seconds` (10 dk),
+döviz (DOVIZ.*) = `stale_threshold_doviz_seconds` (10 dk).
 """
 
 import logging

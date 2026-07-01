@@ -18,8 +18,9 @@ class Settings(BaseSettings):
 
     # finansveri TAMAMEN donuk sayılma eşiği: ana kaynaklarımız + alternatiflerinin
     # hiçbiri bu süreden daha taze değilse (finansveri bize tek taze sayı veremiyor)
-    # tüm sistem altinapi'ye geçer. 5 dk.
-    provider_stale_seconds: float = 300.0
+    # tüm sistem altinapi'ye geçer. 10 dk (kısa duraklamalarda gereksiz geçiş/bildirim
+    # olmasın diye 5 dk → 10 dk).
+    provider_stale_seconds: float = 600.0
 
     jwt_secret: str = "dev_change_me_super_secret_jwt_signing_key_at_least_32_chars"
     jwt_expires_hours: int = 168
@@ -35,11 +36,12 @@ class Settings(BaseSettings):
     altinapi_poll_interval_seconds: float = 3.0
 
     # Bayatlık (staleness) eşikleri: bir sembolün son güncellemesi bu süreden eskiyse
-    # "donuk" sayılıp alternatif kaynağa geçilir. Altın/sarrafiye ve döviz için 5 dk
-    # (boşuna/çırpınan geçişleri azaltmak için). Belirli yavaş semboller için
-    # failover.PER_SYMBOL_THRESHOLD_SECONDS ile özel (daha uzun) eşik verilebilir.
-    stale_threshold_gold_seconds: float = 300.0
-    stale_threshold_doviz_seconds: float = 300.0
+    # "donuk" sayılıp alternatif kaynağa geçilir. Altın/sarrafiye ve döviz için 10 dk
+    # (ana değerler 20-100 sn duraklayıp canlandığında gereksiz geçiş/bildirim olmasın
+    # diye 5 dk → 10 dk). Belirli yavaş semboller için failover.PER_SYMBOL_THRESHOLD_SECONDS
+    # ile özel (daha uzun) eşik verilebilir.
+    stale_threshold_gold_seconds: float = 600.0
+    stale_threshold_doviz_seconds: float = 600.0
 
     # "Toptan donma" alarmı: ana + alternatif TÜM kaynakların en tazesi bile bu süreden
     # eskiyse (yani failover'ın geçebileceği canlı bir kaynak kalmadıysa) Telegram'a

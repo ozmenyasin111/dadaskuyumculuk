@@ -48,8 +48,8 @@ async def test_switches_to_altinapi_when_finansveri_down(monkeypatch):
 
 async def test_switches_to_altinapi_when_finansveri_stale(monkeypatch):
     now = datetime.now(timezone.utc)
-    # finansveri 200 ama guncellendi 10 dk eski (eşik 3 dk) → donuk
-    async def fv(**kw): return _fresh_payload(now, 600)
+    # finansveri 200 ama semboller 12 dk eski (eşik 10 dk) → donuk
+    async def fv(**kw): return _fresh_payload(now, 720)
     async def aa(): return _fresh_payload(now, 2)
     monkeypatch.setattr(finansveri, "fetch_prices", fv)
     monkeypatch.setattr(altinapi, "fetch_prices", aa)

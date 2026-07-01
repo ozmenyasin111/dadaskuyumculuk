@@ -48,8 +48,8 @@ def test_fresh_primary_no_switch():
 
 def test_stale_primary_switches_to_alternative():
     now = datetime.now(timezone.utc)
-    # KULCEALTIN 6 dk donuk (eşik 300sn), alternatif taze
-    f = _payload(now, kulce_age=360, ds_kulce_age=5, kulce_bid=6000.0, ds_bid=6001.0)
+    # KULCEALTIN 12 dk donuk (eşik 600sn), alternatif taze
+    f = _payload(now, kulce_age=720, ds_kulce_age=5, kulce_bid=6000.0, ds_bid=6001.0)
     events = apply_failover(f, now)
     switch = [e for e in events if e["primary"] == "SARRAFIYE.KULCEALTIN"]
     assert len(switch) == 1
@@ -63,11 +63,11 @@ def test_stale_primary_switches_to_alternative():
 
 def test_no_duplicate_switch_event_on_consecutive_ticks():
     now = datetime.now(timezone.utc)
-    f1 = _payload(now, kulce_age=360, ds_kulce_age=5)
+    f1 = _payload(now, kulce_age=720, ds_kulce_age=5)
     ev1 = apply_failover(f1, now)
     assert any(e["type"] == "switch" for e in ev1)
     # ikinci tick: hâlâ donuk → tekrar bildirim ATMAMALI
-    f2 = _payload(now, kulce_age=420, ds_kulce_age=5)
+    f2 = _payload(now, kulce_age=780, ds_kulce_age=5)
     ev2 = apply_failover(f2, now)
     assert ev2 == []
     # ama değer yine alternatifle değiştirilmiş olmalı
@@ -76,7 +76,7 @@ def test_no_duplicate_switch_event_on_consecutive_ticks():
 
 def test_recover_event_when_primary_fresh_again():
     now = datetime.now(timezone.utc)
-    apply_failover(_payload(now, kulce_age=360, ds_kulce_age=5), now)
+    apply_failover(_payload(now, kulce_age=720, ds_kulce_age=5), now)
     # ana kaynak tazelendi
     f = _payload(now, kulce_age=2, ds_kulce_age=5)
     events = apply_failover(f, now)
@@ -88,7 +88,7 @@ def test_recover_event_when_primary_fresh_again():
 def test_no_switch_when_alternative_also_stale():
     now = datetime.now(timezone.utc)
     # her ikisi de donuk → değişiklik yok, değer korunur
-    f = _payload(now, kulce_age=360, ds_kulce_age=600)
+    f = _payload(now, kulce_age=720, ds_kulce_age=900)
     events = apply_failover(f, now)
     assert [e for e in events if e["primary"] == "SARRAFIYE.KULCEALTIN"] == []
     assert f["SARRAFIYE"]["KULCEALTIN"]["bid"] == 6000.0
@@ -97,7 +97,7 @@ def test_no_switch_when_alternative_also_stale():
 def test_scaled_alternative_divided_by_1000():
     now = datetime.now(timezone.utc)
     f = {
-        "MADEN": {"PARUSD": {"bid": 129.5, "ask": 130.0, "timestamp": _iso(now, 360)}},
+        "MADEN": {"PARUSD": {"bid": 129.5, "ask": 130.0, "timestamp": _iso(now, 720)}},
         "DOVIZ": {"DS_PARUSD": {"bid": 129500.0, "ask": 130000.0, "timestamp": _iso(now, 5)}},
     }
     apply_failover(f, now)
@@ -105,18 +105,24 @@ def test_scaled_alternative_divided_by_1000():
     assert abs(f["MADEN"]["PARUSD"]["bid"] - 129.5) < 1e-6
 
 
-def test_doviz_uses_5min_threshold():
+def test_doviz_uses_10min_threshold():
     now = datetime.now(timezone.utc)
-    # USDTRY 4 dk donuk: döviz eşiği 5 dk olduğu için HENÜZ donuk sayılmamalı
+    # EURTRY 8 dk donuk: genel döviz eşiği 10 dk olduğu için HENÜZ donuk sayılmamalı
+    # (USDTRY/SARTRY özel 20 dk eşikte; genel eşiği doğru ölçmek için EURTRY kullanılır).
     f = {
         "DOVIZ": {
-            "USDTRY": {"bid": 46.4, "ask": 46.6, "timestamp": _iso(now, 240)},
-            "DS_USDTRY": {"bid": 46.41, "ask": 46.61, "timestamp": _iso(now, 5)},
+            "EURTRY": {"bid": 48.4, "ask": 48.6, "timestamp": _iso(now, 480)},
+            "DS_EURTRY": {"bid": 48.41, "ask": 48.61, "timestamp": _iso(now, 5)},
         },
     }
     events = apply_failover(f, now)
-    assert [e for e in events if e["primary"] == "DOVIZ.USDTRY"] == []
-    assert f["DOVIZ"]["USDTRY"]["bid"] == 46.4  # dokunulmadı
+    assert [e for e in events if e["primary"] == "DOVIZ.EURTRY"] == []
+    assert f["DOVIZ"]["EURTRY"]["bid"] == 48.4  # dokunulmadı
+    # 11 dk olunca (10 dk eşiği aşınca) ikize geçmeli
+    f["DOVIZ"]["EURTRY"]["timestamp"] = _iso(now, 660)
+    events2 = apply_failover(f, now)
+    assert any(e["primary"] == "DOVIZ.EURTRY" and e["type"] == "switch" for e in events2)
+    assert f["DOVIZ"]["EURTRY"]["bid"] == 48.41
 
 
 def test_usd_sar_use_20min_threshold():
@@ -142,7 +148,7 @@ def test_usd_sar_use_20min_threshold():
 def test_unfilled_when_primary_and_alt_both_stale():
     now = datetime.now(timezone.utc)
     # KULCEALTIN ve ikizi ikisi de donuk → unfilled listesinde olmalı
-    f = _payload(now, kulce_age=400, ds_kulce_age=400)
+    f = _payload(now, kulce_age=720, ds_kulce_age=720)
     uf = unfilled_primaries(f, now)
     assert ("Gram Altın", "SARRAFIYE.KULCEALTIN") in uf
 
@@ -150,7 +156,7 @@ def test_unfilled_when_primary_and_alt_both_stale():
 def test_not_unfilled_when_alt_fresh():
     now = datetime.now(timezone.utc)
     # primary donuk ama ikiz taze → finansveri içinde çözülür, unfilled DEĞİL
-    f = _payload(now, kulce_age=400, ds_kulce_age=5)
+    f = _payload(now, kulce_age=720, ds_kulce_age=5)
     uf = unfilled_primaries(f, now)
     assert ("Gram Altın", "SARRAFIYE.KULCEALTIN") not in uf
 
@@ -158,7 +164,7 @@ def test_not_unfilled_when_alt_fresh():
 def test_patch_from_secondary_fills_only_unfilled():
     now = datetime.now(timezone.utc)
     # finansveri: KULCEALTIN + ikizi donuk
-    primary = _payload(now, kulce_age=400, ds_kulce_age=400, kulce_bid=6000.0)
+    primary = _payload(now, kulce_age=720, ds_kulce_age=720, kulce_bid=6000.0)
     # altinapi (secondary): KULCEALTIN taze
     secondary = _payload(now, kulce_age=2, ds_kulce_age=2, kulce_bid=6010.0)
     uf = unfilled_primaries(primary, now)
@@ -170,8 +176,8 @@ def test_patch_from_secondary_fills_only_unfilled():
 
 def test_patch_skips_when_secondary_also_stale():
     now = datetime.now(timezone.utc)
-    primary = _payload(now, kulce_age=400, ds_kulce_age=400, kulce_bid=6000.0)
-    secondary = _payload(now, kulce_age=400, ds_kulce_age=400, kulce_bid=6010.0)  # altinapi de donuk
+    primary = _payload(now, kulce_age=720, ds_kulce_age=720, kulce_bid=6000.0)
+    secondary = _payload(now, kulce_age=720, ds_kulce_age=720, kulce_bid=6010.0)  # altinapi de donuk
     uf = unfilled_primaries(primary, now)
     events = patch_from_secondary(primary, secondary, uf, now)
     assert events == []
@@ -190,7 +196,7 @@ def test_resolve_fresh_prefers_primary_then_alt():
     f = _payload(now, kulce_age=5, ds_kulce_age=5, kulce_bid=6000.0, ds_bid=6001.0)
     assert resolve_fresh(f, "SARRAFIYE.KULCEALTIN", now) == (6000.0, 6090.0)
     # primary donuk → ikize düşer
-    f2 = _payload(now, kulce_age=400, ds_kulce_age=5, kulce_bid=6000.0, ds_bid=6001.0)
+    f2 = _payload(now, kulce_age=720, ds_kulce_age=5, kulce_bid=6000.0, ds_bid=6001.0)
     assert resolve_fresh(f2, "SARRAFIYE.KULCEALTIN", now) == (6001.0, 6091.0)
 
 
